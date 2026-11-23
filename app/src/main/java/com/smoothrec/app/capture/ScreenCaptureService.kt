@@ -10,6 +10,9 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** Servicio en primer plano que mantiene viva la grabación de pantalla. */
 class ScreenCaptureService : Service() {
@@ -20,19 +23,28 @@ class ScreenCaptureService : Service() {
         private const val TAG = "ScreenCaptureService"
     }
 
+    @Volatile
     private var session: CaptureSession? = null
     private val mainHandler = Handler(Looper.getMainLooper())
+
+    /** Arranque y parada se ejecutan en orden, fuera del hilo principal. */
+    private val lifecycle: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "SmoothRecLifecycle")
+    }
+    @Volatile
+    private var stopRequested = false
+    private val stopPosted = AtomicBoolean(false)
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == CaptureNotification.ACTION_STOP) {
             Log.d(TAG, "Detención solicitada desde la notificación")
-            stopSelf()
+            requestStop()
             return START_NOT_STICKY
         }
 
-        if (session != null) {
+        if (stopRequested || session != null) {
             promoteToForeground()
             return START_NOT_STICKY
         }
@@ -44,7 +56,6 @@ class ScreenCaptureService : Service() {
 
         if (consentData == null || resultCode != Activity.RESULT_OK) {
             Log.w(TAG, "Datos de consentimiento incompletos")
-            notifyStopped()
             stopSelf()
             return START_NOT_STICKY
         }
@@ -57,7 +68,6 @@ class ScreenCaptureService : Service() {
                 .getMediaProjection(resultCode, consentData)
         } catch (e: SecurityException) {
             Log.e(TAG, "No se pudo obtener MediaProjection", e)
-            notifyStopped()
             stopSelf()
             return START_NOT_STICKY
         }
@@ -67,15 +77,20 @@ class ScreenCaptureService : Service() {
             projection,
             {
                 Log.d(TAG, "Sesión detenida desde MediaProjection.Callback")
-                stopSelf()
+                requestStop()
             },
             { messageRes -> notifyConfigApplied(getString(messageRes)) },
         )
         session = newSession
 
-        // La creación del codificador AAC puede bloquear hasta varios segundos.
-        // Hacerla en el hilo principal provoca ANR y grabaciones que nunca arrancan.
-        Thread({
+        // La creación del codificador AAC puede bloquear varios segundos. Hacerla
+        // en el hilo principal provoca ANR y grabaciones que nunca arrancan.
+        lifecycle.execute {
+            // Si ya se pidió detener, no se inicia nada después de la parada.
+            if (stopRequested) {
+                newSession.release()
+                return@execute
+            }
             try {
                 newSession.start()
                 newSession.appliedResolution?.let { result ->
@@ -95,15 +110,26 @@ class ScreenCaptureService : Service() {
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Fallo al iniciar la captura", e)
-                newSession.release()
-                mainHandler.post {
-                    notifyStopped()
-                    stopSelf()
-                }
+                requestStop()
             }
-        }, "SmoothRecStartup").start()
+        }
 
         return START_NOT_STICKY
+    }
+
+    /**
+     * Publica la parada solo después de que el hilo de ciclo de vida haya
+     * drenado los encoders y cerrado el MP4. Así el proceso no se destruye a
+     * mitad de la finalización del archivo.
+     */
+    private fun requestStop() {
+        if (!stopPosted.compareAndSet(false, true)) return
+        stopRequested = true
+        lifecycle.execute {
+            session?.release()
+            session = null
+            mainHandler.post { stopSelf() }
+        }
     }
 
     private fun promoteToForeground() {
@@ -132,12 +158,15 @@ class ScreenCaptureService : Service() {
     }
 
     override fun onDestroy() {
+        // Red de seguridad si el sistema destruye el servicio sin pasar por
+        // requestStop(): se encola la liberación antes de cerrar el ejecutor.
+        stopPosted.set(true)
+        stopRequested = true
         val current = session
         session = null
-        // El drenado de los encoders puede tardar segundos; hacerlo en el hilo
-        // principal provoca ANR al detener y grabaciones que parecen no arrancar.
-        if (current != null) {
-            Thread({ current.release() }, "SmoothRecShutdown").start()
+        lifecycle.execute {
+            current?.release()
+            lifecycle.shutdown()
         }
         notifyStopped()
         super.onDestroy()

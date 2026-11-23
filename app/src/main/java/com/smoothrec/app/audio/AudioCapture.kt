@@ -66,7 +66,9 @@ class PcmSource private constructor(
     fun readInto(buffer: ShortArray, offset: Int, length: Int): Int {
         if (!started || length <= 0) return 0
         return try {
-            val count = record.read(buffer, offset, length, AudioRecord.READ_BLOCKING)
+            // No bloqueante: si la fuente no entrega datos devolvemos 0 y el
+            // codificador rellena con silencio sin quedar colgado al detener.
+            val count = record.read(buffer, offset, length, AudioRecord.READ_NON_BLOCKING)
             if (count > 0) count else 0
         } catch (e: IllegalStateException) {
             0
@@ -198,6 +200,51 @@ class AudioMixer(private val sources: List<PcmSource>) : PcmProvider {
     }
 }
 
+/**
+ * Si la fuente elegida entrega silencio de forma sostenida, pasa a una fuente
+ * alternativa real (normalmente el micrófono) en lugar de grabar un MP4 mudo.
+ * El cambio es permanente durante la sesión para evitar alternancias.
+ */
+class SilenceFallbackProvider(
+    private val primary: PcmProvider,
+    private val fallback: PcmProvider?,
+    private val sampleRate: Int,
+    private val channelCount: Int,
+    private val onFallback: () -> Unit,
+) : PcmProvider {
+
+    @Volatile
+    private var usingFallback = false
+    private var silentFrames = 0
+
+    override fun read(buffer: ShortArray): Int {
+        if (usingFallback) return fallback?.read(buffer) ?: 0
+        val count = primary.read(buffer)
+        val frames = if (count > 0) count / channelCount else buffer.size / channelCount
+        silentFrames = if (count > 0 && hasSignal(buffer, count)) 0 else silentFrames + frames
+        if (fallback != null && silentFrames >= sampleRate * SILENCE_SECONDS) {
+            usingFallback = true
+            silentFrames = 0
+            Log.w(TAG, "Fuente principal sin señal durante ${SILENCE_SECONDS}s: se usa la alternativa")
+            onFallback()
+            return fallback.read(buffer)
+        }
+        return count
+    }
+
+    private fun hasSignal(buffer: ShortArray, count: Int): Boolean {
+        for (i in 0 until count) {
+            if (buffer[i].toInt() != 0) return true
+        }
+        return false
+    }
+
+    private companion object {
+        const val TAG = "SilenceFallbackProvider"
+        const val SILENCE_SECONDS = 3
+    }
+}
+
 /** Fuente PCM lista para codificar. */
 data class AudioPlan(
     val provider: PcmProvider,
@@ -228,6 +275,7 @@ object AudioCaptureFactory {
         context: Context,
         projection: MediaProjection,
         option: AudioSourceOption,
+        onFallback: () -> Unit = {},
     ): AudioSetupResult {
         if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
             PackageManager.PERMISSION_GRANTED
@@ -240,13 +288,13 @@ object AudioCaptureFactory {
                 val spec = AudioFormatSpec(rate, channels)
                 if (!aacEncoderAvailable(spec)) continue
 
-                val plan = tryCreateSources(projection, option, spec)
+                val plan = tryCreateSources(projection, option, spec, onFallback)
                 if (plan != null) {
                     plan.sources.forEach { it.start() }
                     Log.i(
                         TAG,
                         "Audio ${option.key}: $rate Hz, ${spec.channelCount} canales " +
-                            "(estéreo=${spec.stereo})",
+                            "(estéreo=${spec.stereo}), fuentes=${plan.sources.size}",
                     )
                     return AudioSetupResult(plan, plan.noticeRes)
                 }
@@ -265,6 +313,7 @@ object AudioCaptureFactory {
         projection: MediaProjection,
         option: AudioSourceOption,
         spec: AudioFormatSpec,
+        onFallback: () -> Unit,
     ): AudioPlan? {
         val sources = mutableListOf<PcmSource>()
         fun releaseAll() {
@@ -276,6 +325,23 @@ object AudioCaptureFactory {
             AudioSourceOption.INTERNAL -> {
                 val internal = PcmSource.createInternal(projection, spec) ?: return null
                 sources.add(internal)
+                // La captura de reproducción depende de que la app de origen
+                // permita ser grabada. Si no entrega señal, el micrófono evita
+                // que la pista AAC quede compuesta solo por silencio.
+                val mic = PcmSource.createMic(spec)
+                if (mic != null) sources.add(mic)
+                val provider = if (mic != null) {
+                    SilenceFallbackProvider(
+                        internal,
+                        mic,
+                        spec.sampleRate,
+                        spec.channelCount,
+                        onFallback,
+                    )
+                } else {
+                    internal
+                }
+                return AudioPlan(provider, spec, sources.toList())
             }
             AudioSourceOption.MIC -> {
                 val mic = PcmSource.createMic(spec) ?: return null

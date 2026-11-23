@@ -23,6 +23,7 @@ class AacAudioEncoder(
 ) {
 
     private val formatLatch = CountDownLatch(1)
+    private val finishedLatch = CountDownLatch(1)
     private val stopping = AtomicBoolean(false)
     @Volatile
     private var forwarding = false
@@ -62,9 +63,18 @@ class AacAudioEncoder(
     }
 
     fun stop() {
-        if (!stopping.compareAndSet(false, true)) return
+        if (!stopping.compareAndSet(false, true)) {
+            // Otra llamada ya está esperando; no salimos hasta que el hilo haya
+            // drenado y liberado el codec.
+            try {
+                finishedLatch.await(5, TimeUnit.SECONDS)
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+            }
+            return
+        }
         try {
-            thread?.join(2_000)
+            finishedLatch.await(5, TimeUnit.SECONDS)
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
         }
@@ -79,36 +89,51 @@ class AacAudioEncoder(
         var silentFrames = 0
         var silenceReported = false
 
+        fun deliverOutput(index: Int) {
+            if (forwarding && info.size > 0 &&
+                info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG == 0
+            ) {
+                val buffer = mediaCodec.getOutputBuffer(index)
+                if (buffer != null) {
+                    buffer.position(info.offset)
+                    buffer.limit(info.offset + info.size)
+                    output.onEncodedData(EncoderOutput.TRACK_AUDIO, buffer, info)
+                }
+            }
+            mediaCodec.releaseOutputBuffer(index, false)
+        }
+
         try {
             while (!stopping.get()) {
                 val inputIndex = mediaCodec.dequeueInputBuffer(INPUT_TIMEOUT_US)
                 if (inputIndex >= 0) {
                     val input = mediaCodec.getInputBuffer(inputIndex)
                     if (input != null) {
-                        val read: Int
-                        if (forwarding) {
-                            read = provider.read(pcm)
-                        } else {
-                            java.util.Arrays.fill(pcm, 0)
-                            read = pcm.size
-                        }
-                        if (read > 0) {
-                            if (forwarding && !silenceReported) {
-                                silentFrames = if (hasSignal(pcm, read)) 0 else silentFrames + 1
-                                if (silentFrames >= silenceFramesToDetect) {
-                                    silenceReported = true
-                                    Log.w(TAG, "La fuente de audio seleccionada no entrega señal")
-                                    onSilent()
-                                }
+                        // Rellenamos el frame completo: una lectura corta o vacía
+                        // no debe cambiar el tamaño esperado por el codificador.
+                        java.util.Arrays.fill(pcm, 0)
+                        val read = if (forwarding) provider.read(pcm) else pcm.size
+                        if (forwarding && !silenceReported) {
+                            silentFrames = if (read > 0 && hasSignal(pcm, read)) {
+                                0
+                            } else {
+                                silentFrames + 1
                             }
-                            input.clear()
-                            val shortBuffer = input.asShortBuffer()
-                            val count = min(read, shortBuffer.remaining())
+                            if (silentFrames >= silenceFramesToDetect) {
+                                silenceReported = true
+                                Log.w(TAG, "La fuente de audio seleccionada no entrega señal")
+                                onSilent()
+                            }
+                        }
+                        input.clear()
+                        val shortBuffer = input.asShortBuffer()
+                        val count = min(pcm.size, shortBuffer.remaining())
+                        if (count > 0) {
                             shortBuffer.put(pcm, 0, count)
                             mediaCodec.queueInputBuffer(inputIndex, 0, count * 2, ptsUs, 0)
-                            if (forwarding) {
-                                ptsUs += frameSamples * 1_000_000L / spec.sampleRate
-                            }
+                        }
+                        if (forwarding) {
+                            ptsUs += frameSamples * 1_000_000L / spec.sampleRate
                         }
                     }
                 }
@@ -123,23 +148,11 @@ class AacAudioEncoder(
                     }
                     MediaCodec.INFO_TRY_AGAIN_LATER,
                     MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED -> Unit
-                    else -> {
-                        if (forwarding && info.size > 0 &&
-                            info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG == 0
-                        ) {
-                            val buffer = mediaCodec.getOutputBuffer(outputIndex)
-                            if (buffer != null) {
-                                buffer.position(info.offset)
-                                buffer.limit(info.offset + info.size)
-                                output.onEncodedData(EncoderOutput.TRACK_AUDIO, buffer, info)
-                            }
-                        }
-                        mediaCodec.releaseOutputBuffer(outputIndex, false)
-                    }
+                    else -> deliverOutput(outputIndex)
                 }
             }
 
-            // Fin de stream: una última entrada vacía y drenado de los buffers AAC.
+            // Fin de stream: se drenan también las muestras finales al muxer.
             var eosQueued = false
             while (!eosQueued) {
                 val index = mediaCodec.dequeueInputBuffer(INPUT_TIMEOUT_US)
@@ -162,9 +175,10 @@ class AacAudioEncoder(
                 val index = mediaCodec.dequeueOutputBuffer(info, OUTPUT_TIMEOUT_US)
                 if (index >= 0) {
                     eosReceived = info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
-                    mediaCodec.releaseOutputBuffer(index, false)
+                    deliverOutput(index)
                 }
             }
+            if (!eosReceived) Log.w(TAG, "No se recibió el EOS del codificador AAC")
         } catch (e: Exception) {
             Log.e(TAG, "Error en el hilo del encoder AAC", e)
         } finally {
@@ -179,6 +193,7 @@ class AacAudioEncoder(
                 Log.w(TAG, "Error al liberar el codec AAC", e)
             }
             codec = null
+            finishedLatch.countDown()
         }
     }
 

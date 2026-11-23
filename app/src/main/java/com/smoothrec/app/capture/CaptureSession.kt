@@ -68,7 +68,11 @@ class CaptureSession(
 
             // El audio se resuelve antes que el vídeo para registrar sus pistas
             // en el muxer y no perder muestras iniciales ni desincronizar.
-            val audioSetup = AudioCaptureFactory.create(context, projection, settings.audioSource)
+            val audioSetup = AudioCaptureFactory.create(
+                context,
+                projection,
+                settings.audioSource,
+            ) { onNotice(R.string.audio_internal_fallback) }
             audioSetup.noticeRes?.let(onNotice)
             val plan = audioSetup.plan
             newMuxer.prepare(if (plan == null) 1 else 2)
@@ -146,8 +150,13 @@ class CaptureSession(
         encoder = null
 
         val currentMuxer = muxer
-        val hasData = currentMuxer?.hasData() == true
         currentMuxer?.stop()
+        // Solo publicamos si se escribieron muestras y MediaMuxer cerró el
+        // contenedor sin errores; así nunca queda un MP4 incompleto en MediaStore.
+        val publish = currentMuxer?.hasData() == true && currentMuxer.finalizedOk()
+        if (!publish && currentMuxer?.hasData() == true) {
+            Log.w(TAG, "MP4 descartado: MediaMuxer no cerró correctamente")
+        }
         muxer = null
 
         try {
@@ -158,7 +167,7 @@ class CaptureSession(
         descriptor = null
 
         pending?.let {
-            if (hasData) store.publish(it) else store.discard(it)
+            if (publish) store.publish(it) else store.discard(it)
         }
         pending = null
 

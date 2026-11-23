@@ -41,6 +41,8 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
     private var started = false
     private var released = false
     private var bytesWritten = 0L
+    private var writeErrors = 0
+    private var stopFailed = false
 
     /** Debe llamarse antes de iniciar los codificadores. */
     fun prepare(expectedTracks: Int) {
@@ -145,7 +147,8 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
             muxer?.writeSampleData(index, buffer, info)
             bytesWritten += info.size
         } catch (e: Exception) {
-            Log.w(TAG, "Error al escribir una muestra", e)
+            writeErrors++
+            Log.w(TAG, "Error al escribir una muestra ($writeErrors)", e)
         }
     }
 
@@ -163,17 +166,22 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
 
     fun hasTrack(trackId: String): Boolean = synchronized(lock) { indices.containsKey(trackId) }
 
+    /** True solo si todas las muestras se escribieron y el contenedor se cerró bien. */
+    fun finalizedOk(): Boolean = released && !stopFailed && writeErrors == 0
+
     @Synchronized
     fun stop() {
         if (released) return
         try {
             if (started) muxer?.stop()
         } catch (e: IllegalStateException) {
+            stopFailed = true
             Log.w(TAG, "El muxer no se pudo detener limpiamente", e)
         }
         try {
             muxer?.release()
         } catch (e: Exception) {
+            stopFailed = true
             Log.w(TAG, "Error al liberar el muxer", e)
         }
         released = true

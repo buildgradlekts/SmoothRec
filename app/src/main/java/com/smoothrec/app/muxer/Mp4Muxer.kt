@@ -88,6 +88,14 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
         if (released || info.size <= 0) return
         if (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0) return
 
+        val index = indices[trackId]
+        if (started && index == null) {
+            // El formato llegó después de start(): MediaMuxer ya no admite la
+            // pista. No acumulamos muestras que nunca se podrán escribir.
+            Log.w(TAG, "Muestra de $trackId descartada: pista no registrada antes de start()")
+            return
+        }
+
         val copy = ByteBuffer.allocateDirect(info.size).apply {
             put(byteBuffer.duplicate().apply {
                 position(info.offset)
@@ -99,12 +107,11 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
             set(0, copy.limit(), normalizePts(trackId, info.presentationTimeUs), info.flags)
         }
 
-        val index = indices[trackId]
-        if (!started || index == null) {
+        if (!started) {
             pending.add(PendingSample(trackId, copy, copyInfo))
             return
         }
-        write(index, copy, copyInfo)
+        if (index != null) write(index, copy, copyInfo)
     }
 
     /**

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SmoothRec</string>
+
+    <string name="state_ready">Listo</string>
+    <string name="state_requesting">Solicitando permisos</string>
+    <string name="state_recording">Grabando</string>
+    <string name="state_stopped">Detenido</string>
+
+    <string name="hint_ready">Pulsa el botón para empezar</string>
+    <string name="hint_requesting">Permite la captura para continuar</string>
+    <string name="hint_recording">Pulsa para detener</string>
+    <string name="hint_stopped">La sesión se ha detenido</string>
+
+    <string name="current_settings">CONFIGURACIÓN ACTUAL</string>
+    <string name="current_settings_value">1080p · 60 FPS</string>
+    <string name="current_settings_format">%1$s · %2$d FPS</string>
+    <string name="preview_note">El vídeo se guarda en Movies/SmoothRec</string>
+
+    <string name="record_start_description">Iniciar grabación</string>
+    <string name="record_stop_description">Detener grabación</string>
+    <string name="settings_description">Abrir ajustes</string>
+    <string name="back_description">Volver</string>
+
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_quality">Calidad de vídeo</string>
+    <string name="settings_resolution">Resolución</string>
+    <string name="settings_framerate">Frecuencia de fotogramas</string>
+    <string name="settings_framerate_value">60 FPS</string>
+    <string name="settings_encoding">Codificación</string>
+    <string name="settings_encoding_value">Hardware · H.264</string>
+    <string name="settings_note">Los archivos MP4 se guardan en Movies/SmoothRec. Los FPS reales pueden variar según la carga del dispositivo.</string>
+
+    <string name="resolution_1080p">1080p</string>
+    <string name="resolution_original">Original</string>
+    <string name="resolution_864p">864p</string>
+    <string name="resolution_720p">720p</string>
+    <string name="fps_60">60 FPS</string>
+    <string name="fps_30">30 FPS</string>
+    <string name="settings_applied_summary">Se aplicará a la próxima grabación</string>
+    <string name="settings_resolution_hint">Se conserva la relación de aspecto real de la pantalla.</string>
+
+    <string name="fallback_resolution">Combinación no compatible con el encoder: se graba a %1$d×%2$d a %3$d FPS.</string>
+    <string name="fallback_framerate">El encoder no admite la tasa elegida en esta resolución: se usan %1$d FPS.</string>
+
+    <string name="notification_channel_name">Grabación de pantalla</string>
+    <string name="notification_channel_description">Notificación persistente mientras SmoothRec mantiene una sesión activa.</string>
+    <string name="notification_title">SmoothRec</string>
+    <string name="notification_text">Grabando vídeo · 1080p · 60 FPS</string>
+    <string name="notification_text_dynamic">Grabando vídeo · %1$d×%2$d · %3$d FPS</string>
+    <string name="notification_stop_action">Detener</string>
+</resources>

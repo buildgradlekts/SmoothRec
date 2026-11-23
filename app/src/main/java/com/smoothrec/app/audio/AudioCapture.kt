@@ -65,11 +65,30 @@ class PcmSource private constructor(
 
     fun readInto(buffer: ShortArray, offset: Int, length: Int): Int {
         if (!started || length <= 0) return 0
+        // Un read() no bloqueante suele devolver solo unas pocas muestras. Si el
+        // codificador rellena el resto con ceros, el nivel cae decenas de dB y
+        // además avanza los PTS más rápido que el reloj real. Leemos hasta
+        // completar el frame, pero con un plazo máximo igual a su duración.
+        val deadline = System.nanoTime() +
+            length.toLong() * 1_000_000_000L / (spec.sampleRate * spec.channelCount)
+        var total = 0
         return try {
-            // No bloqueante: si la fuente no entrega datos devolvemos 0 y el
-            // codificador rellena con silencio sin quedar colgado al detener.
-            val count = record.read(buffer, offset, length, AudioRecord.READ_NON_BLOCKING)
-            if (count > 0) count else 0
+            while (total < length) {
+                val count = record.read(
+                    buffer,
+                    offset + total,
+                    length - total,
+                    AudioRecord.READ_NON_BLOCKING,
+                )
+                if (count > 0) {
+                    total += count
+                    continue
+                }
+                val remaining = deadline - System.nanoTime()
+                if (remaining <= 0) break
+                Thread.sleep(1)
+            }
+            total
         } catch (e: IllegalStateException) {
             0
         }

@@ -8,6 +8,7 @@ import com.smoothrec.app.encoder.EncoderOutput
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.abs
 import kotlin.math.min
 
 /**
@@ -85,9 +86,20 @@ class AacAudioEncoder(
         val pcm = ShortArray(frameSamples * spec.channelCount)
         var ptsUs = 0L
         val info = MediaCodec.BufferInfo()
+        val frameNs = frameSamples * 1_000_000_000L / spec.sampleRate
+        var nextInputNs = 0L
         val silenceFramesToDetect = spec.sampleRate / frameSamples * 2
         var silentFrames = 0
         var silenceReported = false
+
+        // Medición del PCM real entregado al codificador, antes de AAC.
+        var statFrames = 0L
+        var statReadSamples = 0L
+        var statSamples = 0L
+        var statNonZero = 0L
+        var statSumSq = 0.0
+        var statMax = 0
+        var lastStatNs = System.nanoTime()
 
         fun deliverOutput(index: Int) {
             if (forwarding && info.size > 0 &&
@@ -109,10 +121,54 @@ class AacAudioEncoder(
                 if (inputIndex >= 0) {
                     val input = mediaCodec.getInputBuffer(inputIndex)
                     if (input != null) {
-                        // Rellenamos el frame completo: una lectura corta o vacía
-                        // no debe cambiar el tamaño esperado por el codificador.
+                        // Un frame PCM equivale a frameNs de tiempo real. Sin este
+                        // ritmo el codificador genera PTS mucho más rápido que
+                        // la vídeo y el archivo acaba con audio muy alargado.
+                        if (forwarding) {
+                            val now = System.nanoTime()
+                            if (nextInputNs == 0L || now - nextInputNs > 5 * frameNs) {
+                                nextInputNs = now
+                            }
+                            val waitNs = nextInputNs - now
+                            if (waitNs > 0) java.util.concurrent.locks.LockSupport.parkNanos(waitNs)
+                            nextInputNs += frameNs
+                        }
+
+                        // PcmSource rellena el frame completo; si la fuente no
+                        // entrega datos quedan ceros, pero con el PTS correcto.
                         java.util.Arrays.fill(pcm, 0)
                         val read = if (forwarding) provider.read(pcm) else pcm.size
+                        if (forwarding) {
+                            statFrames++
+                            statReadSamples += read
+                            for (sample in pcm) {
+                                val value = abs(sample.toInt())
+                                statSamples++
+                                if (value > 0) statNonZero++
+                                statSumSq += sample.toDouble() * sample.toDouble()
+                                if (value > statMax) statMax = value
+                            }
+                            val now = System.nanoTime()
+                            if (now - lastStatNs >= 2_000_000_000L && statSamples > 0) {
+                                val avgRead = statReadSamples.toDouble() / statFrames
+                                val nonZeroPct = 100.0 * statNonZero / statSamples
+                                val rms = kotlin.math.sqrt(statSumSq / statSamples)
+                                Log.i(
+                                    TAG,
+                                    "PCM frames=$statFrames leídas/frame=${"%.1f".format(avgRead)} " +
+                                        "no_cero=${"%.1f".format(nonZeroPct)}% " +
+                                        "RMS=${"%.1f".format(rms)} pico=$statMax " +
+                                        "PTS=${"%.3f".format(ptsUs / 1_000_000.0)}s",
+                                )
+                                statFrames = 0
+                                statReadSamples = 0
+                                statSamples = 0
+                                statNonZero = 0
+                                statSumSq = 0.0
+                                statMax = 0
+                                lastStatNs = now
+                            }
+                        }
                         if (forwarding && !silenceReported) {
                             silentFrames = if (read > 0 && hasSignal(pcm, read)) {
                                 0

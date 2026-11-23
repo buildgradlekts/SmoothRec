@@ -29,7 +29,7 @@
     <string name="settings_framerate_value">60 FPS</string>
     <string name="settings_encoding">Codificación</string>
     <string name="settings_encoding_value">Hardware · H.264</string>
-    <string name="settings_note">Los archivos MP4 se guardan en Movies/SmoothRec. Los FPS reales pueden variar según la carga del dispositivo.</string>
+    <string name="settings_note">Los archivos MP4 se guardan en Movies/SmoothRec. Los FPS reales pueden variar según la carga del dispositivo. Los cambios se aplican a la próxima grabación.</string>
 
     <string name="resolution_screen">Pantalla</string>
     <string name="resolution_1080p">1080P</string>
@@ -47,6 +47,14 @@
     <string name="settings_channels">Configuración automática de canales</string>
     <string name="settings_channels_value">Estéreo si es compatible, de lo contrario mono</string>
 
+    <string name="audio_fallback_permission">Sin permiso de micrófono: la grabación será solo vídeo.</string>
+    <string name="audio_fallback_internal">Audio interno no disponible: la grabación será solo vídeo.</string>
+    <string name="audio_fallback_mic">Micrófono no disponible: la grabación será solo vídeo.</string>
+    <string name="audio_fallback_mixed">No se pudieron capturar las fuentes de audio: la grabación será solo vídeo.</string>
+    <string name="audio_fallback_mixed_mic">Audio interno no disponible: se usa solo el micrófono.</string>
+    <string name="audio_fallback_mixed_internal">Micrófono no disponible: se usa solo el audio interno.</string>
+    <string name="audio_fallback_encoder">No se pudo iniciar el codificador de audio: la grabación será solo vídeo.</string>
+
     <string name="fallback_resolution">Combinación no compatible con el encoder: se graba a %1$d×%2$d a %3$d FPS.</string>
     <string name="fallback_framerate">El encoder no admite la tasa elegida en esta resolución: se usan %1$d FPS.</string>
 
@@ -56,4 +64,14 @@
     <string name="notification_text">Grabando vídeo · 1080p · 60 FPS</string>
     <string name="notification_text_dynamic">Grabando vídeo · %1$d×%2$d · %3$d FPS</string>
     <string name="notification_stop_action">Detener</string>
+
+    <string name="about_title">Acerca de SmoothRec</string>
+    <string name="about_creator">Creador y responsable del proyecto: Keiner</string>
+    <string name="about_ai">Asistencia de desarrollo e inteligencia artificial: ChatGPT (OpenAI)</string>
+    <string name="about_tech">Implementación y colaboración técnica: OpenClaude</string>
+    <string name="about_social">Redes sociales</string>
+    <string name="about_tiktok">TikTok · @keinerxzv</string>
+    <string name="about_instagram">Instagram · próximamente</string>
+    <string name="about_tiktok_description">Abrir perfil de TikTok</string>
+    <string name="about_no_browser">No hay una aplicación disponible para abrir el enlace.</string>
 </resources>

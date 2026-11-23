@@ -58,7 +58,7 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
                     buffer.position(info.offset)
                     buffer.limit(info.offset + info.size)
                     try {
-                        this@HardwareVideoEncoder.output?.onEncodedData(buffer, info)
+                        this@HardwareVideoEncoder.output?.onEncodedData(EncoderOutput.TRACK_VIDEO, buffer, info)
                     } catch (e: Exception) {
                         Log.e(TAG, "Error al entregar paquete codificado", e)
                     }
@@ -76,7 +76,7 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
             }
 
             override fun onOutputFormatChanged(codec: MediaCodec, format: android.media.MediaFormat) {
-                this@HardwareVideoEncoder.output?.onOutputFormatChanged(format)
+                this@HardwareVideoEncoder.output?.onOutputFormatChanged(EncoderOutput.TRACK_VIDEO, format)
             }
 
             override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {

@@ -59,10 +59,15 @@ class ScreenCaptureService : Service() {
             return START_NOT_STICKY
         }
 
-        val newSession = CaptureSession(applicationContext, projection) {
-            Log.d(TAG, "Sesión detenida desde MediaProjection.Callback")
-            stopSelf()
-        }
+        val newSession = CaptureSession(
+            applicationContext,
+            projection,
+            {
+                Log.d(TAG, "Sesión detenida desde MediaProjection.Callback")
+                stopSelf()
+            },
+            { messageRes -> notifyConfigApplied(getString(messageRes)) },
+        )
         session = newSession
         try {
             newSession.start()

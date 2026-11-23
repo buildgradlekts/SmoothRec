@@ -4,7 +4,12 @@ import android.content.Context
 import android.media.projection.MediaProjection
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import com.smoothrec.app.R
+import com.smoothrec.app.audio.AacAudioEncoder
+import com.smoothrec.app.audio.AudioCaptureFactory
+import com.smoothrec.app.audio.AudioPlan
 import com.smoothrec.app.encoder.CaptureSizeResolver
+import com.smoothrec.app.encoder.EncoderOutput
 import com.smoothrec.app.encoder.EncoderFactory
 import com.smoothrec.app.encoder.VideoEncoder
 import com.smoothrec.app.muxer.Mp4Muxer
@@ -18,6 +23,7 @@ class CaptureSession(
     private val context: Context,
     private val projection: MediaProjection,
     private val onProjectionStopped: () -> Unit,
+    private val onNotice: (Int) -> Unit = {},
 ) {
     private val store = RecordingStore(context)
 
@@ -26,6 +32,8 @@ class CaptureSession(
     private var muxer: Mp4Muxer? = null
     private var encoder: VideoEncoder? = null
     private var capturer: ScreenCapturer? = null
+    private var audioPlan: AudioPlan? = null
+    private var audioEncoder: AacAudioEncoder? = null
     private var released = false
 
     /** Configuración efectivamente aplicada, disponible para la notificación y la UI. */
@@ -52,7 +60,28 @@ class CaptureSession(
         try {
             pending = store.prepare()
             descriptor = store.openForWrite(pending!!)
-            muxer = Mp4Muxer(descriptor!!).also { it.start() }
+            val newMuxer = Mp4Muxer(descriptor!!)
+            muxer = newMuxer
+
+            // El audio se resuelve antes que el vídeo para registrar sus pistas
+            // en el muxer y no perder muestras iniciales ni desincronizar.
+            val audioSetup = AudioCaptureFactory.create(context, projection, settings.audioSource)
+            audioSetup.noticeRes?.let(onNotice)
+            val plan = audioSetup.plan
+            newMuxer.prepare(if (plan == null) 1 else 2)
+
+            if (plan != null) {
+                val newAudioEncoder = AacAudioEncoder(plan.provider, plan.spec, newMuxer)
+                if (newAudioEncoder.start()) {
+                    audioEncoder = newAudioEncoder
+                    audioPlan = plan
+                } else {
+                    onNotice(R.string.audio_fallback_encoder)
+                    newAudioEncoder.stop()
+                    plan.release()
+                    if (!newMuxer.hasTrack(EncoderOutput.TRACK_AUDIO)) newMuxer.prepare(1)
+                }
+            }
 
             val newEncoder = EncoderFactory.create(config)
             try {
@@ -70,6 +99,8 @@ class CaptureSession(
                 config.width,
                 config.height,
             ).also { it.start() }
+
+            audioEncoder?.resume()
 
             Log.i(
                 TAG,
@@ -89,6 +120,11 @@ class CaptureSession(
 
         capturer?.release()
         capturer = null
+
+        audioEncoder?.stop()
+        audioEncoder = null
+        audioPlan?.release()
+        audioPlan = null
 
         encoder?.let {
             try {

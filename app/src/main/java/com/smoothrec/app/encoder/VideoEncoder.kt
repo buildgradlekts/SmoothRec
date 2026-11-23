@@ -5,10 +5,15 @@ import android.media.MediaFormat
 import android.view.Surface
 import java.nio.ByteBuffer
 
-/** Salida del codificador: el muxer se suscribe a estos eventos. */
+/** Salida de los codificadores: el muxer se suscribe a estos eventos con un id de pista. */
 interface EncoderOutput {
-    fun onOutputFormatChanged(format: MediaFormat)
-    fun onEncodedData(byteBuffer: ByteBuffer, info: MediaCodec.BufferInfo)
+    fun onOutputFormatChanged(trackId: String, format: MediaFormat)
+    fun onEncodedData(trackId: String, byteBuffer: ByteBuffer, info: MediaCodec.BufferInfo)
+
+    companion object {
+        const val TRACK_VIDEO = "video"
+        const val TRACK_AUDIO = "audio"
+    }
 }
 
 /** Contrato del encoder de vídeo implementado en Fase 1. */

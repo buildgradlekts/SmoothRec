@@ -17,9 +17,8 @@ class SettingsActivity : Activity() {
 
     private val resolutionButtons: Map<ResolutionOption, Button> by lazy {
         mapOf(
+            ResolutionOption.SCREEN to findViewById(R.id.resolutionScreenButton),
             ResolutionOption.P1080 to findViewById(R.id.resolution1080Button),
-            ResolutionOption.ORIGINAL to findViewById(R.id.resolutionOriginalButton),
-            ResolutionOption.P864 to findViewById(R.id.resolution864Button),
             ResolutionOption.P720 to findViewById(R.id.resolution720Button),
         )
     }

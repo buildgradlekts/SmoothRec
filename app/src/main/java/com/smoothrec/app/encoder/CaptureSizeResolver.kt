@@ -156,26 +156,17 @@ object CaptureSizeResolver {
         val resolutionOrder = when (settings.resolution) {
             ResolutionOption.P1080 -> listOf(
                 ResolutionOption.P1080,
-                ResolutionOption.P864,
                 ResolutionOption.P720,
-                ResolutionOption.ORIGINAL,
-            )
-            ResolutionOption.P864 -> listOf(
-                ResolutionOption.P864,
-                ResolutionOption.P720,
-                ResolutionOption.P1080,
-                ResolutionOption.ORIGINAL,
+                ResolutionOption.SCREEN,
             )
             ResolutionOption.P720 -> listOf(
                 ResolutionOption.P720,
-                ResolutionOption.P864,
+                ResolutionOption.SCREEN,
                 ResolutionOption.P1080,
-                ResolutionOption.ORIGINAL,
             )
-            ResolutionOption.ORIGINAL -> listOf(
-                ResolutionOption.ORIGINAL,
+            ResolutionOption.SCREEN -> listOf(
+                ResolutionOption.SCREEN,
                 ResolutionOption.P1080,
-                ResolutionOption.P864,
                 ResolutionOption.P720,
             )
         }
@@ -191,9 +182,9 @@ object CaptureSizeResolver {
 
     /**
      * Todas las opciones conservan la relación de aspecto real (lado largo / lado corto).
-     * - ORIGINAL intenta los píxeles detectados y los limita a lo que el encoder admite.
+     * - SCREEN intenta los píxeles detectados y los limita a lo que el encoder admite.
      * - 1080p encaja dentro del sobre 1920x1080.
-     * - 864p / 720p fijan el lado corto y derivan el largo de la relación real.
+     * - 720p fija el lado corto y deriva el largo de la relación real.
      */
     private fun configFor(
         screen: ScreenInfo,
@@ -210,7 +201,7 @@ object CaptureSizeResolver {
         var long: Float
         var short: Float
         when (option) {
-            ResolutionOption.ORIGINAL -> {
+            ResolutionOption.SCREEN -> {
                 long = sourceLong
                 short = sourceShort
             }
@@ -221,10 +212,6 @@ object CaptureSizeResolver {
                 )
                 long = sourceLong * scale
                 short = sourceShort * scale
-            }
-            ResolutionOption.P864 -> {
-                short = TARGET_864.toFloat()
-                long = short * sourceLong / sourceShort
             }
             ResolutionOption.P720 -> {
                 short = TARGET_720.toFloat()
@@ -341,6 +328,5 @@ object CaptureSizeResolver {
     private const val TAG = "CaptureSizeResolver"
     private const val MAX_LONG_SIDE = 1920
     private const val MAX_SHORT_SIDE = 1080
-    private const val TARGET_864 = 864
     private const val TARGET_720 = 720
 }

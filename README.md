@@ -39,7 +39,7 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`
 
 | Parámetro | Valor |
 |---|---|
-| Resolución | Seleccionable: 1080p / Original / 864p / 720p, siempre derivada de la relación de aspecto real |
+| Resolución | Seleccionable: Pantalla / 1080P / 720P, siempre derivada de la relación de aspecto real |
 | FPS | Seleccionable: 60 / 30 (objetivo, no garantía) |
 | Códec | H.264 (`video/avc`) |
 | Encoder | Hardware Qualcomm (`c2.qti.avc.encoder`) |
@@ -58,11 +58,11 @@ No se escribe metadato de rotación: el `VirtualDisplay`, el encoder y el muxer 
 
 ## Configuración de grabación
 
-La pantalla de ajustes permite elegir resolución (1080p, Original, 864p, 720p) y FPS (60 o 30). Las preferencias se guardan en `SharedPreferences` y se aplican al iniciar cada grabación. La opción por defecto sigue siendo **1080p · 60 FPS**.
+La pantalla de ajustes permite elegir resolución (Pantalla, 1080P, 720P) y FPS (60 o 30). Las preferencias se guardan en `SharedPreferences` y se aplican al iniciar cada grabación. Por defecto: **Pantalla · 60 FPS**.
 
 `CaptureSizeResolver` consulta `VideoCapabilities` del encoder hardware (`c2.qti.avc.encoder`) para validar tamaño, alineación y tasa. Si la combinación elegida no es compatible, se prueba primero la misma tasa con menor resolución y después 30 FPS, se muestra un aviso al usuario y la notificación refleja los valores realmente aplicados. Nunca se estira, recorta ni gira la imagen.
 
-En el Redmi Note 13 4G (pantalla 1080×2400, límite hardware 1920×1920), las opciones 1080p, Original y 864p convergen en **864×1920** porque conservar la relación 9:20 impide alcanzar 1080 píxeles en el lado corto sin deformar. 720p produce **720×1600**. En pantallas con otra relación (p. ej. 1080×2160) las opciones sí difieren: 1080p → 960×1920, 864p → 864×1728, 720p → 720×1440.
+En el Redmi Note 13 4G (pantalla 1080×2400, límite hardware 1920×1920), Pantalla y 1080P convergen en **864×1920** porque conservar la relación 9:20 impide alcanzar 1080 píxeles en el lado corto sin deformar. 720P produce **720×1600**. En pantallas con otra relación (p. ej. 1080×2160) las opciones sí difieren: 1080P → 960×1920, 720P → 720×1440.
 
 ## Pendiente (no implementado)
 

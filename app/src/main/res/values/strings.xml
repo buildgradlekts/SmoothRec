@@ -13,7 +13,7 @@
     <string name="hint_stopped">La sesión se ha detenido</string>
 
     <string name="current_settings">CONFIGURACIÓN ACTUAL</string>
-    <string name="current_settings_value">1080p · 60 FPS</string>
+    <string name="current_settings_value">Pantalla · 60 FPS</string>
     <string name="current_settings_format">%1$s · %2$d FPS</string>
     <string name="preview_note">El vídeo se guarda en Movies/SmoothRec</string>
 
@@ -31,10 +31,9 @@
     <string name="settings_encoding_value">Hardware · H.264</string>
     <string name="settings_note">Los archivos MP4 se guardan en Movies/SmoothRec. Los FPS reales pueden variar según la carga del dispositivo.</string>
 
-    <string name="resolution_1080p">1080p</string>
-    <string name="resolution_original">Original</string>
-    <string name="resolution_864p">864p</string>
-    <string name="resolution_720p">720p</string>
+    <string name="resolution_screen">Pantalla</string>
+    <string name="resolution_1080p">1080P</string>
+    <string name="resolution_720p">720P</string>
     <string name="fps_60">60 FPS</string>
     <string name="fps_30">30 FPS</string>
     <string name="settings_applied_summary">Se aplicará a la próxima grabación</string>

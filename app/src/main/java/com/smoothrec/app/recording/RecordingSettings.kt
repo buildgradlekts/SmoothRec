@@ -4,20 +4,24 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.smoothrec.app.R
 
-/** Opciones de resolución. El valor real se deriva siempre de la relación de aspecto de la pantalla. */
+/** Opciones de resolución. Las dimensiones se derivan siempre de la relación de aspecto real. */
 enum class ResolutionOption(
     val key: String,
     val labelRes: Int, // R.string.*
 ) {
+    SCREEN("screen", R.string.resolution_screen),
     P1080("1080p", R.string.resolution_1080p),
-    ORIGINAL("original", R.string.resolution_original),
-    P864("864p", R.string.resolution_864p),
     P720("720p", R.string.resolution_720p),
     ;
 
     companion object {
-        fun fromKey(key: String?): ResolutionOption =
-            values().firstOrNull { it.key == key } ?: P1080
+        fun fromKey(key: String?): ResolutionOption = when (key) {
+            P1080.key -> P1080
+            P720.key -> P720
+            // "original" era la clave de la versión anterior; se conserva la preferencia guardada.
+            SCREEN.key, "original", null -> SCREEN
+            else -> SCREEN
+        }
     }
 }
 
@@ -33,7 +37,7 @@ enum class FpsOption(val value: Int) {
 }
 
 data class RecordingSettings(
-    val resolution: ResolutionOption = ResolutionOption.P1080,
+    val resolution: ResolutionOption = ResolutionOption.SCREEN,
     val fps: FpsOption = FpsOption.FPS_60,
 )
 

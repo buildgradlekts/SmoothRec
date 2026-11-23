@@ -78,43 +78,29 @@
                     android:orientation="horizontal">
 
                     <Button
+                        android:id="@+id/resolutionScreenButton"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/resolution_screen"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp" />
+
+                    <Button
                         android:id="@+id/resolution1080Button"
                         android:layout_width="0dp"
                         android:layout_height="44dp"
+                        android:layout_marginStart="8dp"
                         android:layout_weight="1"
                         android:background="@drawable/chip_background"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:minWidth="0dp"
                         android:text="@string/resolution_1080p"
-                        android:textColor="@color/text_primary"
-                        android:textSize="12sp" />
-
-                    <Button
-                        android:id="@+id/resolutionOriginalButton"
-                        android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="8dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/chip_background"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:minWidth="0dp"
-                        android:text="@string/resolution_original"
-                        android:textColor="@color/text_primary"
-                        android:textSize="12sp" />
-
-                    <Button
-                        android:id="@+id/resolution864Button"
-                        android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="8dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/chip_background"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:minWidth="0dp"
-                        android:text="@string/resolution_864p"
                         android:textColor="@color/text_primary"
                         android:textSize="12sp" />
 

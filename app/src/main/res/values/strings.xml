@@ -57,6 +57,7 @@
     <string name="audio_fallback_mixed_mic">Audio interno no disponible: se usa solo el micrófono.</string>
     <string name="audio_fallback_mixed_internal">Micrófono no disponible: se usa solo el audio interno.</string>
     <string name="audio_fallback_encoder">No se pudo iniciar el codificador de audio: la grabación será solo vídeo.</string>
+    <string name="audio_fallback_silent">La fuente de audio seleccionada no entrega señal. Comprueba la app de origen o elige otro modo en Ajustes.</string>
 
     <string name="fallback_resolution">Combinación no compatible con el encoder: se graba a %1$d×%2$d a %3$d FPS.</string>
     <string name="fallback_framerate">El encoder no admite la tasa elegida en esta resolución: se usan %1$d FPS.</string>

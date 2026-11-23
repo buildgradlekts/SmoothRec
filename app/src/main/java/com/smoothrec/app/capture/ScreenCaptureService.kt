@@ -6,7 +6,9 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.media.projection.MediaProjectionManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 
 /** Servicio en primer plano que mantiene viva la grabación de pantalla. */
@@ -19,6 +21,7 @@ class ScreenCaptureService : Service() {
     }
 
     private var session: CaptureSession? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -69,28 +72,37 @@ class ScreenCaptureService : Service() {
             { messageRes -> notifyConfigApplied(getString(messageRes)) },
         )
         session = newSession
-        try {
-            newSession.start()
-            newSession.appliedResolution?.let { result ->
-                val config = result.config
-                CaptureNotification.update(
-                    this,
-                    getString(
-                        com.smoothrec.app.R.string.notification_text_dynamic,
-                        config.width,
-                        config.height,
-                        config.frameRate,
-                    ),
-                )
-                result.fallbackMessageRes?.let { res ->
-                    notifyConfigApplied(getString(res, *result.fallbackFormatArgs.toTypedArray()))
+
+        // La creación del codificador AAC puede bloquear hasta varios segundos.
+        // Hacerla en el hilo principal provoca ANR y grabaciones que nunca arrancan.
+        Thread({
+            try {
+                newSession.start()
+                newSession.appliedResolution?.let { result ->
+                    val config = result.config
+                    CaptureNotification.update(
+                        this,
+                        getString(
+                            com.smoothrec.app.R.string.notification_text_dynamic,
+                            config.width,
+                            config.height,
+                            config.frameRate,
+                        ),
+                    )
+                    result.fallbackMessageRes?.let { res ->
+                        notifyConfigApplied(getString(res, *result.fallbackFormatArgs.toTypedArray()))
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Fallo al iniciar la captura", e)
+                newSession.release()
+                mainHandler.post {
+                    notifyStopped()
+                    stopSelf()
                 }
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Fallo al iniciar la captura", e)
-            notifyStopped()
-            stopSelf()
-        }
+        }, "SmoothRecStartup").start()
+
         return START_NOT_STICKY
     }
 
@@ -120,8 +132,13 @@ class ScreenCaptureService : Service() {
     }
 
     override fun onDestroy() {
-        session?.release()
+        val current = session
         session = null
+        // El drenado de los encoders puede tardar segundos; hacerlo en el hilo
+        // principal provoca ANR al detener y grabaciones que parecen no arrancar.
+        if (current != null) {
+            Thread({ current.release() }, "SmoothRecShutdown").start()
+        }
         notifyStopped()
         super.onDestroy()
     }

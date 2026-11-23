@@ -26,6 +26,16 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
     private val indices = HashMap<String, Int>()
     private val pending = ArrayList<PendingSample>()
 
+    /**
+     * MediaCodec con entrada Surface entrega PTS absolutos del reloj del sistema
+     * (microsegundos desde el arranque). MediaMuxer solo los normaliza cuando la
+     * pista de vídeo es la primera; con dos pistas escribe un edit list vacío
+     * enorme y el MP4 queda con una duración absurda y un único fotograma visible.
+     * Rebaseamos cada pista a su primera muestra y garantizamos PTS monotónicos.
+     */
+    private val firstPts = HashMap<String, Long>()
+    private val lastPts = HashMap<String, Long>()
+
     private var expectedTracks = 1
     private var muxer: MediaMuxer? = null
     private var started = false
@@ -51,6 +61,12 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
     @Synchronized
     override fun onOutputFormatChanged(trackId: String, format: MediaFormat) {
         if (released || formats.containsKey(trackId)) return
+        if (started && !indices.containsKey(trackId)) {
+            // MediaMuxer no admite añadir pistas después de start(): el formato
+            // llegó tarde (por ejemplo, un encoder opcional que falló).
+            Log.w(TAG, "Formato tardío de $trackId: la pista no se añadirá")
+            return
+        }
         formats[trackId] = format
         try {
             ensureMuxer()
@@ -78,7 +94,7 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
             flip()
         }
         val copyInfo = MediaCodec.BufferInfo().apply {
-            set(0, copy.limit(), info.presentationTimeUs, info.flags)
+            set(0, copy.limit(), normalizePts(trackId, info.presentationTimeUs), info.flags)
         }
 
         val index = indices[trackId]
@@ -87,6 +103,41 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
             return
         }
         write(index, copy, copyInfo)
+    }
+
+    /**
+     * Convierte el PTS del codificador en un PTS relativo al inicio de la pista,
+     * en microsegundos y estrictamente monotónico. Se aplica tanto a muestras
+     * en directo como a las que estaban pendientes de que arrancara el muxer.
+     */
+    private fun normalizePts(trackId: String, raw: Long): Long {
+        val origin = firstPts.getOrPut(trackId) {
+            Log.i(TAG, "PTS inicial $trackId: $raw us")
+            raw
+        }
+        var pts = raw - origin
+        if (pts < 0) pts = 0
+        val previous = lastPts[trackId]
+        if (previous != null && pts <= previous) pts = previous + 1
+        lastPts[trackId] = pts
+        return pts
+    }
+
+    /** Arranca el muxer aunque no llegue el formato de alguna pista opcional. */
+    @Synchronized
+    fun startWithAvailableTracks() {
+        if (released || started) return
+        expectedTracks = 1
+        if (formats.isNotEmpty()) {
+            try {
+                ensureMuxer()
+                muxer!!.start()
+                started = true
+                flushPending()
+            } catch (e: Exception) {
+                Log.e(TAG, "No se pudo iniciar el muxer con las pistas disponibles", e)
+            }
+        }
     }
 
     private fun write(index: Int, buffer: ByteBuffer, info: MediaCodec.BufferInfo) {
@@ -130,6 +181,8 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
         started = false
         indices.clear()
         formats.clear()
+        firstPts.clear()
+        lastPts.clear()
         pending.clear()
     }
 

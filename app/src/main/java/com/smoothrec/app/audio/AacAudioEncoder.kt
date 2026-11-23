@@ -19,6 +19,7 @@ class AacAudioEncoder(
     private val provider: PcmProvider,
     private val spec: AudioFormatSpec,
     private val output: EncoderOutput,
+    private val onSilent: () -> Unit = {},
 ) {
 
     private val formatLatch = CountDownLatch(1)
@@ -74,6 +75,9 @@ class AacAudioEncoder(
         val pcm = ShortArray(frameSamples * spec.channelCount)
         var ptsUs = 0L
         val info = MediaCodec.BufferInfo()
+        val silenceFramesToDetect = spec.sampleRate / frameSamples * 2
+        var silentFrames = 0
+        var silenceReported = false
 
         try {
             while (!stopping.get()) {
@@ -89,6 +93,14 @@ class AacAudioEncoder(
                             read = pcm.size
                         }
                         if (read > 0) {
+                            if (forwarding && !silenceReported) {
+                                silentFrames = if (hasSignal(pcm, read)) 0 else silentFrames + 1
+                                if (silentFrames >= silenceFramesToDetect) {
+                                    silenceReported = true
+                                    Log.w(TAG, "La fuente de audio seleccionada no entrega señal")
+                                    onSilent()
+                                }
+                            }
                             input.clear()
                             val shortBuffer = input.asShortBuffer()
                             val count = min(read, shortBuffer.remaining())
@@ -168,6 +180,13 @@ class AacAudioEncoder(
             }
             codec = null
         }
+    }
+
+    private fun hasSignal(buffer: ShortArray, count: Int): Boolean {
+        for (i in 0 until count) {
+            if (buffer[i].toInt() != 0) return true
+        }
+        return false
     }
 
     private companion object {

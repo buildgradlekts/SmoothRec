@@ -23,6 +23,9 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
     private var codec: MediaCodec? = null
     private var surface: Surface? = null
     private var output: EncoderOutput? = null
+    private var buffersDelivered = 0
+    private var firstRawPts = -1L
+    private var lastRawPts = -1L
 
     override fun start(config: EncoderConfig, output: EncoderOutput) {
         this.output = output
@@ -55,6 +58,9 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
                 if (buffer != null && info.size > 0 &&
                     info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG == 0
                 ) {
+                    buffersDelivered++
+                    if (firstRawPts < 0) firstRawPts = info.presentationTimeUs
+                    lastRawPts = info.presentationTimeUs
                     buffer.position(info.offset)
                     buffer.limit(info.offset + info.size)
                     try {
@@ -101,10 +107,14 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
             Log.w(TAG, "No se pudo señalar fin de stream", e)
         }
         try {
-            eosLatch.await(3, TimeUnit.SECONDS)
+            eosLatch.await(5, TimeUnit.SECONDS)
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
         }
+        Log.i(
+            TAG,
+            "Vídeo drenado: buffers=$buffersDelivered PTS crudos $firstRawPts..$lastRawPts us",
+        )
     }
 
     override fun release() {

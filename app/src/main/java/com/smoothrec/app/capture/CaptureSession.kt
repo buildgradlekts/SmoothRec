@@ -51,7 +51,10 @@ class CaptureSession(
         projection.registerCallback(callback, null)
     }
 
+    @Synchronized
     fun start() {
+        // Si el servicio se detuvo mientras esperaba el hilo de arranque, no hay nada que iniciar.
+        if (released) return
         // Tamaño, FPS y orientación se fijan al iniciar: el MP4 no admite cambiar de pista a mitad.
         val settings = RecordingPreferences.load(context)
         val resolution = CaptureSizeResolver.forContext(context, settings)
@@ -71,7 +74,9 @@ class CaptureSession(
             newMuxer.prepare(if (plan == null) 1 else 2)
 
             if (plan != null) {
-                val newAudioEncoder = AacAudioEncoder(plan.provider, plan.spec, newMuxer)
+                val newAudioEncoder = AacAudioEncoder(plan.provider, plan.spec, newMuxer) {
+                    onNotice(R.string.audio_fallback_silent)
+                }
                 if (newAudioEncoder.start()) {
                     audioEncoder = newAudioEncoder
                     audioPlan = plan
@@ -81,6 +86,10 @@ class CaptureSession(
                     plan.release()
                     if (!newMuxer.hasTrack(EncoderOutput.TRACK_AUDIO)) newMuxer.prepare(1)
                 }
+            }
+            if (plan == null || audioEncoder == null) {
+                // Evita que el muxer espere eternamente un formato de audio que no llegará.
+                newMuxer.startWithAvailableTracks()
             }
 
             val newEncoder = EncoderFactory.create(config)
@@ -114,6 +123,7 @@ class CaptureSession(
         }
     }
 
+    @Synchronized
     fun release() {
         if (released) return
         released = true

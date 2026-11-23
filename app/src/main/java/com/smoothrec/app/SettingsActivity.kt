@@ -1,10 +1,14 @@
 package com.smoothrec.app
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import com.smoothrec.app.recording.AudioSourceOption
 import com.smoothrec.app.recording.FpsOption
 import com.smoothrec.app.recording.RecordingPreferences
@@ -62,6 +66,15 @@ class SettingsActivity : Activity() {
             button.setOnClickListener {
                 settings = settings.copy(audioSource = option)
                 persistAndRefresh()
+            }
+        }
+
+        findViewById<ImageButton>(R.id.tiktokButton).setOnClickListener {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.tiktok.com/@keinerxzv"))
+            try {
+                startActivity(intent)
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(this, R.string.about_no_browser, Toast.LENGTH_SHORT).show()
             }
         }
 

@@ -41,6 +41,7 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`
 |---|---|
 | Resolución | Seleccionable: Pantalla / 1080P / 720P, siempre derivada de la relación de aspecto real |
 | FPS | Seleccionable: 60 / 30 (objetivo, no garantía) |
+| Audio | Audio interno / Micrófono / Interno + micrófono (AAC, estéreo automático o mono) |
 | Códec | H.264 (`video/avc`) |
 | Encoder | Hardware Qualcomm (`c2.qti.avc.encoder`) |
 | Perfil / nivel | High / AVC Level 5 |
@@ -64,8 +65,24 @@ La pantalla de ajustes permite elegir resolución (Pantalla, 1080P, 720P) y FPS 
 
 En el Redmi Note 13 4G (pantalla 1080×2400, límite hardware 1920×1920), Pantalla y 1080P convergen en **864×1920** porque conservar la relación 9:20 impide alcanzar 1080 píxeles en el lado corto sin deformar. 720P produce **720×1600**. En pantallas con otra relación (p. ej. 1080×2160) las opciones sí difieren: 1080P → 960×1920, 720P → 720×1440.
 
+## Audio (implementado)
+
+- Modalidades seleccionables: **Audio interno**, **Micrófono** e **Interno + micrófono** (por defecto, audio interno).
+- El formato PCM se detecta en tiempo de ejecución: se prueba estéreo a 48 kHz y, si no está disponible, se desciende a mono y/o 44,1 kHz. Se comprueban `AudioRecord.getMinBufferSize()`, el estado real de `AudioRecord` y la existencia de un codificador AAC para esa combinación.
+- El audio interno usa `AudioPlaybackCaptureConfiguration` sobre el `MediaProjection` (API 29+).
+- La mezcla de audio interno + micrófono aplica ganancia y limitación suave para evitar saturación; ambas fuentes comparten el mismo reloj PCM y se codifican en una sola pista AAC sincronizada con el vídeo.
+- AAC LC a 96 kbps (estéreo) o 64 kbps (mono). Si una modalidad falla, se informa al usuario y se graba solo vídeo (o la fuente disponible en el modo mixto).
+- Se ha verificado en el dispositivo con sondas de las API reales: codificador `c2.android.aac.encoder`, 48 kHz estéreo disponible y muxer AAC funcional (40 muestras, archivo válido).
+
+## Acerca de SmoothRec
+
+- Creador y responsable del proyecto: **Keiner**.
+- Asistencia de desarrollo e inteligencia artificial: **ChatGPT (OpenAI)**.
+- Implementación y colaboración técnica: **OpenClaude**.
+- TikTok: https://www.tiktok.com/@keinerxzv
+- Instagram: enlace pendiente para una futura actualización.
+
 ## Pendiente (no implementado)
 
-- Captura de audio y sincronización A/V.
 - Selección manual de bitrate.
 - Control de duración, pausa/reanudación y grabaciones en segundo plano extendido.

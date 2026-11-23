@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <!-- Requerido desde API 33 para mostrar la notificación persistente. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Requerido por AudioRecord: audio interno (API 29+), micrófono o mezcla. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Solo necesario en API 23-28; en API 29+ se usa MediaStore sin permiso. -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"

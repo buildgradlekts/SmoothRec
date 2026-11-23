@@ -36,9 +36,26 @@ enum class FpsOption(val value: Int) {
     }
 }
 
+/** Modalidad de captura de audio. Siempre se comprueba la compatibilidad real del dispositivo. */
+enum class AudioSourceOption(
+    val key: String,
+    val labelRes: Int,
+) {
+    INTERNAL("internal", R.string.audio_internal),
+    MIC("mic", R.string.audio_mic),
+    MIXED("mixed", R.string.audio_mixed),
+    ;
+
+    companion object {
+        fun fromKey(key: String?): AudioSourceOption =
+            values().firstOrNull { it.key == key } ?: INTERNAL
+    }
+}
+
 data class RecordingSettings(
     val resolution: ResolutionOption = ResolutionOption.SCREEN,
     val fps: FpsOption = FpsOption.FPS_60,
+    val audioSource: AudioSourceOption = AudioSourceOption.INTERNAL,
 )
 
 /** Persistencia sencilla sin dependencias: SharedPreferences privadas de la app. */
@@ -47,6 +64,7 @@ object RecordingPreferences {
     private const val FILE_NAME = "smoothrec_recording_settings"
     private const val KEY_RESOLUTION = "resolution"
     private const val KEY_FPS = "fps"
+    private const val KEY_AUDIO_SOURCE = "audio_source"
 
     fun load(context: Context): RecordingSettings {
         val prefs: SharedPreferences = context.applicationContext
@@ -54,6 +72,7 @@ object RecordingPreferences {
         return RecordingSettings(
             resolution = ResolutionOption.fromKey(prefs.getString(KEY_RESOLUTION, null)),
             fps = FpsOption.fromValue(prefs.getInt(KEY_FPS, FpsOption.FPS_60.value)),
+            audioSource = AudioSourceOption.fromKey(prefs.getString(KEY_AUDIO_SOURCE, null)),
         )
     }
 
@@ -63,6 +82,7 @@ object RecordingPreferences {
             .edit()
             .putString(KEY_RESOLUTION, settings.resolution.key)
             .putInt(KEY_FPS, settings.fps.value)
+            .putString(KEY_AUDIO_SOURCE, settings.audioSource.key)
             .apply()
     }
 }

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
+import com.smoothrec.app.recording.AudioSourceOption
 import com.smoothrec.app.recording.FpsOption
 import com.smoothrec.app.recording.RecordingPreferences
 import com.smoothrec.app.recording.RecordingSettings
@@ -20,6 +21,14 @@ class SettingsActivity : Activity() {
             ResolutionOption.SCREEN to findViewById(R.id.resolutionScreenButton),
             ResolutionOption.P1080 to findViewById(R.id.resolution1080Button),
             ResolutionOption.P720 to findViewById(R.id.resolution720Button),
+        )
+    }
+
+    private val audioButtons: Map<AudioSourceOption, Button> by lazy {
+        mapOf(
+            AudioSourceOption.INTERNAL to findViewById(R.id.audioInternalButton),
+            AudioSourceOption.MIC to findViewById(R.id.audioMicButton),
+            AudioSourceOption.MIXED to findViewById(R.id.audioMixedButton),
         )
     }
 
@@ -49,6 +58,12 @@ class SettingsActivity : Activity() {
                 persistAndRefresh()
             }
         }
+        audioButtons.forEach { (option, button) ->
+            button.setOnClickListener {
+                settings = settings.copy(audioSource = option)
+                persistAndRefresh()
+            }
+        }
 
         refreshSelection()
     }
@@ -68,6 +83,12 @@ class SettingsActivity : Activity() {
         fpsButtons.forEach { (option, button) ->
             button.setBackgroundResource(
                 if (option == settings.fps) R.drawable.chip_background_selected
+                else R.drawable.chip_background,
+            )
+        }
+        audioButtons.forEach { (option, button) ->
+            button.setBackgroundResource(
+                if (option == settings.audioSource) R.drawable.chip_background_selected
                 else R.drawable.chip_background,
             )
         }

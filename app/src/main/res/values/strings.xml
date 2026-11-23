@@ -39,6 +39,14 @@
     <string name="settings_applied_summary">Se aplicará a la próxima grabación</string>
     <string name="settings_resolution_hint">Se conserva la relación de aspecto real de la pantalla.</string>
 
+    <string name="settings_audio">Audio</string>
+    <string name="settings_audio_source">Fuente de audio</string>
+    <string name="audio_internal">Audio interno</string>
+    <string name="audio_mic">Micrófono</string>
+    <string name="audio_mixed">Interno + micrófono</string>
+    <string name="settings_channels">Configuración automática de canales</string>
+    <string name="settings_channels_value">Estéreo si es compatible, de lo contrario mono</string>
+
     <string name="fallback_resolution">Combinación no compatible con el encoder: se graba a %1$d×%2$d a %3$d FPS.</string>
     <string name="fallback_framerate">El encoder no admite la tasa elegida en esta resolución: se usan %1$d FPS.</string>
 

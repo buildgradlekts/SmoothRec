@@ -28,7 +28,10 @@
     <string name="settings_framerate">Frecuencia de fotogramas</string>
     <string name="settings_framerate_value">60 FPS</string>
     <string name="settings_encoding">Codificación</string>
-    <string name="settings_encoding_value">Hardware · H.264</string>
+    <string name="settings_encoding_value">Hardware</string>
+    <string name="settings_codec">Códec</string>
+    <string name="settings_codec_value">H.264</string>
+    <string name="settings_info_title">Información adicional</string>
     <string name="settings_note">Los archivos MP4 se guardan en Movies/SmoothRec. Los FPS reales pueden variar según la carga del dispositivo. Los cambios se aplican a la próxima grabación.</string>
 
     <string name="resolution_screen">Pantalla</string>

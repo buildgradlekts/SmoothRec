@@ -8,16 +8,20 @@ import com.smoothrec.app.R
 import com.smoothrec.app.audio.AacAudioEncoder
 import com.smoothrec.app.audio.AudioCaptureFactory
 import com.smoothrec.app.audio.AudioPlan
+import com.smoothrec.app.audio.CaptureDiagnostics
 import com.smoothrec.app.encoder.CaptureSizeResolver
 import com.smoothrec.app.encoder.EncoderOutput
 import com.smoothrec.app.encoder.EncoderFactory
+import com.smoothrec.app.encoder.GlWatermarkRenderer
 import com.smoothrec.app.encoder.VideoEncoder
 import com.smoothrec.app.muxer.Mp4Muxer
+import com.smoothrec.app.recording.AudioSourceOption
 import com.smoothrec.app.recording.RecordingPreferences
+import com.smoothrec.app.recording.RecordingSettings
 
 /**
  * Orquesta la sesión completa de grabación:
- * MediaProjection -> VirtualDisplay -> MediaCodec (H.264) -> MediaMuxer -> MediaStore.
+ * MediaProjection -> VirtualDisplay -> [GlWatermarkRenderer opcional] -> MediaCodec -> MediaMuxer -> MediaStore.
  */
 class CaptureSession(
     private val context: Context,
@@ -31,13 +35,21 @@ class CaptureSession(
     private var descriptor: ParcelFileDescriptor? = null
     private var muxer: Mp4Muxer? = null
     private var encoder: VideoEncoder? = null
+    private var watermarkRenderer: GlWatermarkRenderer? = null
     private var capturer: ScreenCapturer? = null
     private var audioPlan: AudioPlan? = null
     private var audioEncoder: AacAudioEncoder? = null
+    private var settingsUsed: RecordingSettings = RecordingPreferences.load(context)
     private var released = false
 
-    /** Configuración efectivamente aplicada, disponible para la notificación y la UI. */
+    @Volatile private var paused = false
+    private var pauseStartedNs = 0L
+    private var totalPausedNs = 0L
+
     var appliedResolution: CaptureSizeResolver.ResolutionResult? = null
+        private set
+
+    var savedOk: Boolean = false
         private set
 
     private val callback = object : MediaProjection.Callback() {
@@ -53,46 +65,56 @@ class CaptureSession(
 
     @Synchronized
     fun start() {
-        // Si el servicio se detuvo mientras esperaba el hilo de arranque, no hay nada que iniciar.
         if (released) return
-        // Tamaño, FPS y orientación se fijan al iniciar: el MP4 no admite cambiar de pista a mitad.
         val settings = RecordingPreferences.load(context)
+        settingsUsed = settings
         val resolution = CaptureSizeResolver.forContext(context, settings)
         val config = resolution.config
         appliedResolution = resolution
         try {
             pending = store.prepare()
             descriptor = store.openForWrite(pending!!)
+            val sessionStartNs = System.nanoTime()
             val newMuxer = Mp4Muxer(descriptor!!)
             muxer = newMuxer
 
-            // El audio se resuelve antes que el vídeo para registrar sus pistas
-            // en el muxer y no perder muestras iniciales ni desincronizar.
             val audioSetup = AudioCaptureFactory.create(
                 context,
                 projection,
                 settings.audioSource,
+                settings.channels,
             ) { onNotice(R.string.audio_internal_fallback) }
             audioSetup.noticeRes?.let(onNotice)
             val plan = audioSetup.plan
-            newMuxer.prepare(if (plan == null) 1 else 2)
+            newMuxer.prepare(if (plan == null) 1 else 2, sessionStartNs)
 
             if (plan != null) {
+                val silentNotice = if (plan.option == AudioSourceOption.INTERNAL) {
+                    R.string.audio_internal_silent
+                } else {
+                    R.string.audio_fallback_silent
+                }
                 val newAudioEncoder = AacAudioEncoder(plan.provider, plan.spec, newMuxer) {
-                    onNotice(R.string.audio_fallback_silent)
+                    onNotice(silentNotice)
                 }
                 if (newAudioEncoder.start()) {
                     audioEncoder = newAudioEncoder
                     audioPlan = plan
+                    CaptureDiagnostics.log(
+                        "Sesión: codificador AAC listo (${plan.spec.sampleRate} Hz, " +
+                            "${plan.spec.channelCount} canal/es)",
+                    )
                 } else {
+                    CaptureDiagnostics.log("Sesión: codificador AAC NO se pudo iniciar")
                     onNotice(R.string.audio_fallback_encoder)
                     newAudioEncoder.stop()
                     plan.release()
-                    if (!newMuxer.hasTrack(EncoderOutput.TRACK_AUDIO)) newMuxer.prepare(1)
+                    if (!newMuxer.hasTrack(EncoderOutput.TRACK_AUDIO)) {
+                        newMuxer.prepare(1, sessionStartNs)
+                    }
                 }
             }
             if (plan == null || audioEncoder == null) {
-                // Evita que el muxer espere eternamente un formato de audio que no llegará.
                 newMuxer.startWithAvailableTracks()
             }
 
@@ -105,20 +127,55 @@ class CaptureSession(
             }
             encoder = newEncoder
 
+            // Solo instanciamos el pipeline GL si la marca de agua está activada.
+            val captureSurface = if (settings.watermarkEnabled) {
+                val renderer = GlWatermarkRenderer(
+                    newEncoder.inputSurface(),
+                    config.width,
+                    config.height,
+                )
+                try {
+                    val surface = renderer.start()
+                    watermarkRenderer = renderer
+                    CaptureDiagnostics.log("Sesión: marca de agua 'SmoothRec' activada en el vídeo")
+                    surface
+                } catch (e: Exception) {
+                    Log.w(TAG, "Fallback sin marca de agua GL por error al iniciar", e)
+                    renderer.release()
+                    newEncoder.inputSurface()
+                }
+            } else {
+                newEncoder.inputSurface()
+            }
+
             capturer = ScreenCapturer(
                 context,
                 projection,
-                newEncoder.inputSurface(),
+                captureSurface,
                 config.width,
                 config.height,
             ).also { it.start() }
 
-            audioEncoder?.resume()
+            if (plan != null && audioEncoder != null) {
+                val sourceStart = plan.startSources()
+                sourceStart.noticeRes?.let(onNotice)
+                if (!sourceStart.success) {
+                    Log.e(TAG, "No hay fuentes de audio: la grabación seguirá sin pista de audio")
+                    audioEncoder?.stop()
+                    audioEncoder = null
+                    plan.release()
+                    audioPlan = null
+                    newMuxer.startWithAvailableTracks()
+                } else {
+                    audioEncoder?.resume()
+                    CaptureDiagnostics.logAudioConfigurations(context)
+                }
+            }
 
             Log.i(
                 TAG,
                 "Grabación iniciada: ${config.width}x${config.height}@${config.frameRate} " +
-                    "(elegido ${resolution.requested.width}x${resolution.requested.height}@${resolution.requested.frameRate})",
+                    "${config.bitRate / 1_000_000}Mbps watermark=${settings.watermarkEnabled}",
             )
         } catch (e: Exception) {
             Log.e(TAG, "No se pudo iniciar la grabación", e)
@@ -128,13 +185,90 @@ class CaptureSession(
     }
 
     @Synchronized
+    fun pause() {
+        if (released || paused) return
+        paused = true
+        pauseStartedNs = System.nanoTime()
+        encoder?.setPaused(true)
+        audioEncoder?.pause()
+        val renderer = watermarkRenderer
+        if (renderer != null) {
+            renderer.setPaused(true)
+        } else {
+            capturer?.setSurface(null)
+        }
+        CaptureDiagnostics.log("Sesión: grabación EN PAUSA")
+    }
+
+    @Synchronized
+    fun resume() {
+        if (released || !paused) return
+        val nowNs = System.nanoTime()
+        if (pauseStartedNs > 0L && nowNs > pauseStartedNs) {
+            totalPausedNs += (nowNs - pauseStartedNs)
+        }
+        pauseStartedNs = 0L
+        paused = false
+
+        val enc = encoder
+        enc?.setPausedOffsetUs(totalPausedNs / 1_000L)
+        enc?.setPaused(false)
+        enc?.requestSyncFrame()
+
+        val renderer = watermarkRenderer
+        if (renderer != null) {
+            renderer.setPaused(false)
+        } else if (enc != null) {
+            capturer?.setSurface(enc.inputSurface())
+        }
+
+        audioEncoder?.resumeAfterPause(totalPausedNs)
+        CaptureDiagnostics.log("Sesión: grabación REANUDADA (pausa acumulada=${totalPausedNs / 1_000_000}ms)")
+    }
+
+    fun isPaused(): Boolean = paused
+
+    fun snapshotTelemetry(elapsedActiveMs: Long): RecordingTelemetry {
+        val cfg = appliedResolution?.config
+        val enc = encoder
+        val aud = audioEncoder
+        val audState = aud?.state()
+        val encError = enc?.lastError()
+        val encState = when {
+            encError != null -> RecordingTelemetry.STATE_ERROR
+            paused -> RecordingTelemetry.STATE_PAUSED
+            enc?.isRunning() == true -> RecordingTelemetry.STATE_RUNNING
+            else -> RecordingTelemetry.STATE_READY
+        }
+        return RecordingTelemetry(
+            width = cfg?.width ?: 0,
+            height = cfg?.height ?: 0,
+            configuredFps = cfg?.frameRate ?: settingsUsed.fps.value,
+            effectiveFps = enc?.effectiveFps() ?: 0,
+            bitrateBps = cfg?.bitRate ?: 0,
+            audioSource = settingsUsed.audioSource,
+            audioActive = aud != null && audState != AacAudioEncoder.AudioHealthState.ERROR,
+            audioSilent = audState == AacAudioEncoder.AudioHealthState.SILENT,
+            encoderState = encState,
+            paused = paused,
+            elapsedActiveMs = elapsedActiveMs,
+            lastError = encError,
+        )
+    }
+
+    @Synchronized
     fun release() {
         if (released) return
         released = true
+        paused = false
 
         capturer?.release()
         capturer = null
 
+        watermarkRenderer?.release()
+        watermarkRenderer = null
+
+        encoder?.signalEndOfStream()
         audioEncoder?.stop()
         audioEncoder = null
         audioPlan?.release()
@@ -151,9 +285,8 @@ class CaptureSession(
 
         val currentMuxer = muxer
         currentMuxer?.stop()
-        // Solo publicamos si se escribieron muestras y MediaMuxer cerró el
-        // contenedor sin errores; así nunca queda un MP4 incompleto en MediaStore.
         val publish = currentMuxer?.hasData() == true && currentMuxer.finalizedOk()
+        savedOk = publish
         if (!publish && currentMuxer?.hasData() == true) {
             Log.w(TAG, "MP4 descartado: MediaMuxer no cerró correctamente")
         }
@@ -171,17 +304,12 @@ class CaptureSession(
         }
         pending = null
 
+        CaptureDiagnostics.write(context)
+
         try {
             projection.unregisterCallback(callback)
         } catch (e: RuntimeException) {
             Log.w(TAG, "No se pudo desregistrar el callback", e)
-        }
-        try {
-            projection.stop()
-        } catch (e: IllegalStateException) {
-            Log.w(TAG, "La proyección ya estaba detenida", e)
-        } catch (e: SecurityException) {
-            Log.w(TAG, "No se pudo detener la proyección", e)
         }
     }
 

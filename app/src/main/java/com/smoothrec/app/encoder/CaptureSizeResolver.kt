@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Point
 import android.hardware.display.DisplayManager
 import android.media.MediaCodecInfo
-import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.os.Build
 import android.util.Log
@@ -14,14 +13,14 @@ import com.smoothrec.app.R
 import com.smoothrec.app.recording.FpsOption
 import com.smoothrec.app.recording.RecordingSettings
 import com.smoothrec.app.recording.ResolutionOption
+import com.smoothrec.app.recording.VideoQualityOption
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.round
 
 /**
- * Calcula las dimensiones de captura a partir de los píxeles reales de la pantalla,
- * conservando la relación de aspecto y respetando lo que el encoder H.264 hardware
- * realmente declara que puede hacer.
+ * Calcula las dimensiones, FPS y bitrate efectivos a partir de la pantalla real
+ * y las capacidades declaradas por el codificador H.264 del dispositivo.
  */
 object CaptureSizeResolver {
 
@@ -37,20 +36,12 @@ object CaptureSizeResolver {
         val config: EncoderConfig,
         val requested: EncoderConfig,
         val codecName: String?,
-        /** Recurso de texto a mostrar cuando hubo que corregir la combinación elegida. */
         val fallbackMessageRes: Int?,
         val fallbackFormatArgs: List<Any>,
     ) {
         val usedFallback: Boolean get() = fallbackMessageRes != null
     }
 
-    /**
-     * Obtiene el área real de contenido. MediaProjection captura el contenido de la
-     * Window (no el framebuffer físico con barras del sistema), por lo que en API 30+
-     * getCurrentWindowMetrics().bounds es la fuente más fiel. En versiones anteriores
-     * se usa el tamaño real de la Display. La densidad se lee de DisplayMetrics porque
-     * es la que se pasa al VirtualDisplay.
-     */
     fun readScreen(context: Context): ScreenInfo {
         val densityDpi = context.resources.displayMetrics.densityDpi
         val rotation = currentRotation(context)
@@ -93,23 +84,53 @@ object CaptureSizeResolver {
         )
     }
 
-    /**
-     * Resuelve la configuración efectiva. Nunca estira, recorta ni gira la imagen:
-     * todas las opciones parten de la relación de aspecto real de la pantalla.
-     */
+    /** Detecta los FPS soportados realmente por la pantalla y el codificador hardware. */
+    fun supportedFpsOptions(context: Context): List<FpsOption> {
+        val screen = readScreen(context)
+        val codecInfo = EncoderFactory.primaryCodecInfo(EncoderConfig())
+        val limits = codecLimits(codecInfo)
+        val sampleConfig = configFor(screen, ResolutionOption.SCREEN, FpsOption.FPS_60, VideoQualityOption.AUTO, limits)
+
+        val displayMaxHz = maxDisplayRefreshHz(context)
+        val result = mutableListOf(FpsOption.FPS_30)
+        for (candidate in listOf(FpsOption.FPS_60, FpsOption.FPS_90, FpsOption.FPS_120)) {
+            if (candidate.value > displayMaxHz + 5f && candidate != FpsOption.FPS_60) continue
+            val test = sampleConfig.copy(frameRate = candidate.value)
+            if (isSupported(test, codecInfo)) {
+                result.add(candidate)
+            }
+        }
+        return result
+    }
+
+    /** Detecta las opciones de resolución compatibles con el codificador del dispositivo. */
+    fun supportedResolutions(context: Context): List<ResolutionOption> {
+        val screen = readScreen(context)
+        val codecInfo = EncoderFactory.primaryCodecInfo(EncoderConfig())
+        val limits = codecLimits(codecInfo)
+        val available = mutableListOf(ResolutionOption.SCREEN)
+        for (opt in listOf(ResolutionOption.P1080, ResolutionOption.P720)) {
+            val cfg = configFor(screen, opt, FpsOption.FPS_30, VideoQualityOption.AUTO, limits)
+            if (isSupported(cfg, codecInfo)) {
+                available.add(opt)
+            }
+        }
+        return available
+    }
+
     fun resolve(screen: ScreenInfo, settings: RecordingSettings): ResolutionResult {
         val reference = EncoderConfig(frameRate = settings.fps.value)
         val codecInfo = EncoderFactory.primaryCodecInfo(reference)
         val codecName = codecInfo?.name
         val limits = codecLimits(codecInfo)
 
-        val requested = configFor(screen, settings.resolution, settings.fps, limits)
-        val candidates = candidates(settings, limits)
-            .map { configFor(screen, it.first, it.second, limits) }
+        val requested = configFor(screen, settings.resolution, settings.fps, settings.videoQuality, limits)
+        val candidates = candidates(settings)
+            .map { configFor(screen, it.first, it.second, settings.videoQuality, limits) }
             .distinctBy { "${it.width}x${it.height}@${it.frameRate}" }
 
         val supported = candidates.firstOrNull { isSupported(it, codecInfo) }
-        val chosen = supported ?: safestFallback(screen, limits)
+        val chosen = supported ?: safestFallback(screen, settings.videoQuality, limits)
 
         val message: Pair<Int, List<Any>>? = when {
             chosen.width != requested.width || chosen.height != requested.height ->
@@ -125,10 +146,9 @@ object CaptureSizeResolver {
 
         Log.i(
             TAG,
-            "Pantalla ${screen.width}x${screen.height} (${screen.source}), densidad ${screen.densityDpi}, " +
-                "rotación ${screen.rotation}, códec $codecName -> solicitado " +
-                "${requested.width}x${requested.height}@${requested.frameRate}, aplicado " +
-                "${chosen.width}x${chosen.height}@${chosen.frameRate}",
+            "Pantalla ${screen.width}x${screen.height} (${screen.source}), rotación ${screen.rotation}, " +
+                "códec $codecName -> solicitado ${requested.width}x${requested.height}@${requested.frameRate}, " +
+                "aplicado ${chosen.width}x${chosen.height}@${chosen.frameRate} (${chosen.bitRate / 1_000_000} Mbps)",
         )
 
         return ResolutionResult(
@@ -143,32 +163,17 @@ object CaptureSizeResolver {
     fun forContext(context: Context, settings: RecordingSettings): ResolutionResult =
         resolve(readScreen(context), settings)
 
-    /** Orden de intentos: se priorizan los FPS, bajando resolución antes que FPS. */
-    private fun candidates(
-        settings: RecordingSettings,
-        limits: Limits,
-    ): List<Pair<ResolutionOption, FpsOption>> {
-        val fpsOrder = if (settings.fps == FpsOption.FPS_60) {
-            listOf(FpsOption.FPS_60, FpsOption.FPS_30)
-        } else {
-            listOf(FpsOption.FPS_30)
+    private fun candidates(settings: RecordingSettings): List<Pair<ResolutionOption, FpsOption>> {
+        val fpsOrder = when (settings.fps) {
+            FpsOption.FPS_120 -> listOf(FpsOption.FPS_120, FpsOption.FPS_90, FpsOption.FPS_60, FpsOption.FPS_30)
+            FpsOption.FPS_90 -> listOf(FpsOption.FPS_90, FpsOption.FPS_60, FpsOption.FPS_30)
+            FpsOption.FPS_60 -> listOf(FpsOption.FPS_60, FpsOption.FPS_30)
+            FpsOption.FPS_30 -> listOf(FpsOption.FPS_30)
         }
         val resolutionOrder = when (settings.resolution) {
-            ResolutionOption.P1080 -> listOf(
-                ResolutionOption.P1080,
-                ResolutionOption.P720,
-                ResolutionOption.SCREEN,
-            )
-            ResolutionOption.P720 -> listOf(
-                ResolutionOption.P720,
-                ResolutionOption.SCREEN,
-                ResolutionOption.P1080,
-            )
-            ResolutionOption.SCREEN -> listOf(
-                ResolutionOption.SCREEN,
-                ResolutionOption.P1080,
-                ResolutionOption.P720,
-            )
+            ResolutionOption.P1080 -> listOf(ResolutionOption.P1080, ResolutionOption.P720, ResolutionOption.SCREEN)
+            ResolutionOption.P720 -> listOf(ResolutionOption.P720, ResolutionOption.SCREEN, ResolutionOption.P1080)
+            ResolutionOption.SCREEN -> listOf(ResolutionOption.SCREEN, ResolutionOption.P1080, ResolutionOption.P720)
         }
 
         val result = mutableListOf<Pair<ResolutionOption, FpsOption>>()
@@ -180,16 +185,11 @@ object CaptureSizeResolver {
         return result
     }
 
-    /**
-     * Todas las opciones conservan la relación de aspecto real (lado largo / lado corto).
-     * - SCREEN intenta los píxeles detectados y los limita a lo que el encoder admite.
-     * - 1080p encaja dentro del sobre 1920x1080.
-     * - 720p fija el lado corto y deriva el largo de la relación real.
-     */
     private fun configFor(
         screen: ScreenInfo,
         option: ResolutionOption,
         fps: FpsOption,
+        quality: VideoQualityOption,
         limits: Limits,
     ): EncoderConfig {
         val sourceWidth = max(screen.width, 1)
@@ -236,12 +236,18 @@ object CaptureSizeResolver {
 
         val width = if (landscape) alignedLong else alignedShort
         val height = if (landscape) alignedShort else alignedLong
-        return EncoderConfig(width = width, height = height, frameRate = fps.value)
+        val rawBitrate = quality.resolveBitrate(width, height, fps.value)
+        val clampedBitrate = rawBitrate.coerceIn(limits.minBitrate, limits.maxBitrate)
+        return EncoderConfig(
+            width = width,
+            height = height,
+            frameRate = fps.value,
+            bitRate = clampedBitrate,
+        )
     }
 
-    /** Comprobación con VideoCapabilities: tamaño, alineación y tasa real declarada. */
     private fun isSupported(config: EncoderConfig, codecInfo: MediaCodecInfo?): Boolean {
-        if (codecInfo == null) return true // Sin datos del sistema no bloqueamos la grabación.
+        if (codecInfo == null) return true
         return try {
             val caps = codecInfo.getCapabilitiesForType(MediaFormat.MIMETYPE_VIDEO_AVC)
                 ?: return true
@@ -260,8 +266,22 @@ object CaptureSizeResolver {
         }
     }
 
-    private fun safestFallback(screen: ScreenInfo, limits: Limits): EncoderConfig =
-        configFor(screen, ResolutionOption.P720, FpsOption.FPS_30, limits)
+    private fun safestFallback(screen: ScreenInfo, quality: VideoQualityOption, limits: Limits): EncoderConfig =
+        configFor(screen, ResolutionOption.P720, FpsOption.FPS_30, quality, limits)
+
+    private fun maxDisplayRefreshHz(context: Context): Float {
+        return try {
+            val display = context.getSystemService(DisplayManager::class.java)
+                .getDisplay(Display.DEFAULT_DISPLAY) ?: return 60f
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                display.supportedModes.maxOfOrNull { it.refreshRate } ?: display.refreshRate
+            } else {
+                display.refreshRate
+            }
+        } catch (_: Exception) {
+            60f
+        }
+    }
 
     private data class Limits(
         val minWidth: Int,
@@ -269,6 +289,8 @@ object CaptureSizeResolver {
         val minHeight: Int,
         val maxHeight: Int,
         val alignment: Int,
+        val minBitrate: Int,
+        val maxBitrate: Int,
     ) {
         val minLong: Int get() = max(minWidth, minHeight)
         val minShort: Int get() = min(minWidth, minHeight)
@@ -277,13 +299,12 @@ object CaptureSizeResolver {
     }
 
     private fun codecLimits(info: MediaCodecInfo?): Limits {
-        if (info == null) {
-            return Limits(128, MAX_LONG_SIDE, 128, MAX_LONG_SIDE, 2)
-        }
+        val defaultLimits = Limits(128, MAX_LONG_SIDE, 128, MAX_LONG_SIDE, 2, 1_000_000, 30_000_000)
+        if (info == null) return defaultLimits
         return try {
             val vc = info.getCapabilitiesForType(MediaFormat.MIMETYPE_VIDEO_AVC)
                 ?.videoCapabilities
-                ?: return Limits(128, MAX_LONG_SIDE, 128, MAX_LONG_SIDE, 2)
+                ?: return defaultLimits
             Limits(
                 minWidth = vc.supportedWidths.lower,
                 maxWidth = vc.supportedWidths.upper,
@@ -293,10 +314,12 @@ object CaptureSizeResolver {
                     vc.widthAlignment.coerceAtLeast(1),
                     vc.heightAlignment.coerceAtLeast(1),
                 ),
+                minBitrate = vc.bitrateRange.lower.coerceAtLeast(500_000),
+                maxBitrate = vc.bitrateRange.upper.coerceAtLeast(4_000_000),
             )
         } catch (e: Exception) {
-            Log.w(TAG, "No se pudieron leer los límites del encoder; usando 1920x1920", e)
-            Limits(128, MAX_LONG_SIDE, 128, MAX_LONG_SIDE, 2)
+            Log.w(TAG, "No se pudieron leer los límites del encoder", e)
+            defaultLimits
         }
     }
 
@@ -320,7 +343,7 @@ object CaptureSizeResolver {
                 context.getSystemService(WindowManager::class.java)
                     .defaultDisplay.rotation
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             -1
         }
     }

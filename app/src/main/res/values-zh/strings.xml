@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SmoothRec</string>
+
+    <string name="nav_home">首页</string>
+    <string name="nav_recordings">录制</string>
+
+    <string name="state_ready">就绪</string>
+    <string name="state_requesting">正在请求权限</string>
+    <string name="state_session">会话已激活</string>
+    <string name="state_recording">录制中</string>
+    <string name="state_paused">已暂停</string>
+    <string name="state_stopped">已停止</string>
+
+    <string name="hint_ready">点击开始屏幕录制</string>
+    <string name="hint_requesting">请允许系统屏幕录制权限以继续</string>
+    <string name="hint_session">使用按钮或悬浮球开始录制</string>
+    <string name="hint_recording">正在后台录制 · 使用控制栏暂停或停止</string>
+    <string name="hint_paused">录制已暂停 · 随时可继续</string>
+    <string name="hint_stopped">会话已结束</string>
+
+    <string name="action_start_session">开始捕获</string>
+    <string name="action_start_recording">录制</string>
+    <string name="action_pause">暂停</string>
+    <string name="action_resume">继续</string>
+    <string name="action_stop">停止</string>
+    <string name="action_end_session">结束会话</string>
+
+    <string name="monitor_title">引擎状态</string>
+    <string name="monitor_res_fps">%1$s · %2$d/%3$d FPS</string>
+    <string name="monitor_bitrate">%1$s Mbps</string>
+    <string name="monitor_audio_active">音频：%1$s</string>
+    <string name="monitor_audio_off">无音频</string>
+    <string name="monitor_audio_silent">音频无信号</string>
+    <string name="monitor_encoder_ready">编码器就绪</string>
+    <string name="monitor_encoder_running">编码中</string>
+    <string name="monitor_encoder_paused">已暂停</string>
+    <string name="monitor_encoder_error">编码器错误</string>
+    <string name="current_settings">当前配置</string>
+    <string name="current_settings_format">%1$s · %2$d FPS · %3$s</string>
+    <string name="preview_note">安全保存至 Movies/SmoothRec</string>
+
+    <string name="record_start_description">开始录制</string>
+    <string name="record_stop_description">停止录制</string>
+    <string name="settings_description">设置</string>
+    <string name="back_description">返回</string>
+
+    <string name="recordings_title">录制列表</string>
+    <string name="recordings_count">%1$d 个视频</string>
+    <string name="recordings_empty_title">暂无录制视频</string>
+    <string name="recordings_empty_hint">使用 SmoothRec 录制的视频将自动显示在此处。</string>
+    <string name="recording_play">播放</string>
+    <string name="recording_share">分享</string>
+    <string name="recording_delete">删除</string>
+    <string name="recording_delete_title">删除录制文件？</string>
+    <string name="recording_delete_message">将永久删除“%1$s”。</string>
+    <string name="recording_deleted">录制已删除</string>
+    <string name="recording_delete_error">无法删除视频</string>
+    <string name="recording_open_error">未找到可用的视频播放器</string>
+    <string name="recording_share_chooser">分享视频</string>
+    <string name="recording_meta_format">%1$s · %2$s · %3$s</string>
+
+    <string name="settings_title">设置</string>
+
+    <string name="settings_quality">1. 视频画质</string>
+    <string name="settings_bitrate">码率</string>
+    <string name="quality_auto">自动</string>
+    <string name="quality_low">4 Mbps</string>
+    <string name="quality_medium">8 Mbps</string>
+    <string name="quality_high">12 Mbps</string>
+    <string name="quality_ultra">16 Mbps</string>
+    <string name="quality_max">24 Mbps</string>
+    <string name="settings_duration_limit">最大时长</string>
+    <string name="duration_unlimited">无限制</string>
+    <string name="duration_5m">5 分钟</string>
+    <string name="duration_15m">15 分钟</string>
+    <string name="duration_30m">30 分钟</string>
+    <string name="duration_60m">60 分钟</string>
+    <string name="duration_limit_reached">已达到最大录制时长 · 视频已保存</string>
+
+    <string name="settings_resolution">2. 分辨率</string>
+    <string name="resolution_screen">自动</string>
+    <string name="resolution_1080p">1080p</string>
+    <string name="resolution_720p">720p</string>
+    <string name="settings_resolution_hint">保持真实屏幕宽高比，不裁剪也不拉伸。</string>
+
+    <string name="settings_framerate">3. 帧率 (FPS)</string>
+    <string name="fps_30">30 FPS</string>
+    <string name="fps_60">60 FPS</string>
+    <string name="fps_90">90 FPS</string>
+    <string name="fps_120">120 FPS</string>
+    <string name="settings_fps_hint">仅显示您的屏幕与硬件编码器支持的帧率。</string>
+
+    <string name="settings_audio">4. 音频</string>
+    <string name="settings_audio_source">音频来源</string>
+    <string name="audio_internal">内部音频</string>
+    <string name="audio_mic">麦克风</string>
+    <string name="audio_mixed">内录 + 麦克风</string>
+    <string name="settings_channels">声道</string>
+    <string name="channel_mono">单声道</string>
+    <string name="channel_stereo">立体声</string>
+
+    <string name="settings_watermark">5. 水印</string>
+    <string name="watermark_toggle_label">在视频中显示“SmoothRec”</string>
+    <string name="watermark_hint">在最终 MP4 画面固定角落添加极简高透明白色水印。</string>
+
+    <string name="settings_appearance">外观、语言与悬浮球</string>
+    <string name="settings_theme">主题</string>
+    <string name="theme_auto">自动</string>
+    <string name="theme_dark">深色</string>
+    <string name="theme_light">浅色</string>
+    <string name="settings_language">语言</string>
+    <string name="language_auto">自动</string>
+    <string name="language_es">Español</string>
+    <string name="language_en">English</string>
+    <string name="language_zh">中文</string>
+    <string name="language_hi">हिन्दी</string>
+    <string name="language_ar">العربية</string>
+    <string name="settings_bubble_opacity">悬浮球透明度 (%1$d%%)</string>
+    <string name="overlay_permission">悬浮窗权限</string>
+    <string name="overlay_permission_hint">用于在游戏和其他应用上方显示悬浮控制球。</string>
+    <string name="overlay_permission_granted">悬浮窗权限已开启。</string>
+
+    <string name="settings_updates">6. 检查更新</string>
+    <string name="update_installed_version">当前版本：v%1$s (%2$d)</string>
+    <string name="update_check">检查更新</string>
+    <string name="update_checking">正在检查…</string>
+    <string name="update_none">暂未发布新版本。</string>
+    <string name="update_current">已是最新版本。</string>
+    <string name="update_error">无法连接检查更新。</string>
+    <string name="update_found">发现新版本 %1$s</string>
+    <string name="update_download_confirm_title">发现可用更新 (%1$s)</string>
+    <string name="update_download_confirm_action">下载并安装</string>
+    <string name="update_title">SmoothRec 更新 %1$s</string>
+    <string name="update_tap">点击下载并安装</string>
+    <string name="update_channel">SmoothRec 更新</string>
+    <string name="update_downloading">正在下载更新…</string>
+    <string name="update_allow_install">请允许 SmoothRec 安装未知来源应用以继续。</string>
+
+    <string name="settings_credits">7. 致谢</string>
+    <string name="about_creator">开发者：Keiner</string>
+    <string name="about_subtitle">SmoothRec · 独立屏幕录制工具</string>
+    <string name="about_tiktok">TikTok</string>
+    <string name="about_instagram">Instagram</string>
+    <string name="about_tiktok_description">打开 TikTok 主页</string>
+    <string name="about_instagram_description">打开 Instagram 主页</string>
+    <string name="about_no_browser">没有可用于打开链接的应用。</string>
+
+    <string name="audio_fallback_permission">缺少麦克风权限：仅录制视频。</string>
+    <string name="audio_fallback_internal">内部音频不可用：仅录制视频。</string>
+    <string name="audio_fallback_internal_mic">内部音频不可用：改用麦克风。</string>
+    <string name="audio_fallback_mic">麦克风不可用：仅录制视频。</string>
+    <string name="audio_fallback_mixed">无法捕获音频源：仅录制视频。</string>
+    <string name="audio_fallback_mixed_mic">内部音频不可用：仅麦克风。</string>
+    <string name="audio_fallback_mixed_internal">麦克风不可用：仅内部音频。</string>
+    <string name="audio_fallback_encoder">音频编码器启动失败：仅录制视频。</string>
+    <string name="audio_fallback_silent">所选音频源无声音信号。</string>
+    <string name="audio_internal_silent">源应用禁止内录或当前无声音输出。</string>
+    <string name="audio_permission_denied">录音权限被拒绝。</string>
+    <string name="notification_permission_denied">通知权限被拒绝；悬浮控制依然可用。</string>
+    <string name="audio_internal_fallback">内部音频无信号：已回退至麦克风。</string>
+    <string name="audio_channels_fallback">声道已根据设备自动调整。</string>
+    <string name="fallback_resolution">已按设备兼容性调整为 %1$d×%2$d · %3$d FPS。</string>
+    <string name="fallback_framerate">已按设备兼容性调整为 %1$d FPS。</string>
+    <string name="recording_saved">视频已保存至 Movies/SmoothRec</string>
+    <string name="recording_error">录制出错：%1$s</string>
+
+    <string name="permission_rationale_title">需要以下权限</string>
+    <string name="permission_rationale_body">SmoothRec 需要音频权限以录制声音，并需要通知权限以在后台保持录制服务运行。</string>
+    <string name="permission_rationale_continue">继续</string>
+    <string name="common_cancel">取消</string>
+
+    <string name="notification_channel_name">屏幕录制</string>
+    <string name="notification_channel_description">SmoothRec 录制期间显示的常驻通知。</string>
+    <string name="notification_title">SmoothRec</string>
+    <string name="notification_text_dynamic">录制中 · %1$d×%2$d · %3$d FPS</string>
+    <string name="notification_stop_action">停止</string>
+    <string name="notification_pause_action">暂停</string>
+    <string name="notification_resume_action">继续</string>
+    <string name="notification_close_action">关闭</string>
+    <string name="notification_session_text">会话就绪 · 点击悬浮球开始录制</string>
+    <string name="notification_recording_time">录制中 · %1$s</string>
+    <string name="notification_paused_time">已暂停 · %1$s</string>
+
+    <string name="overlay_start">录制</string>
+    <string name="overlay_pause">暂停</string>
+    <string name="overlay_resume">继续</string>
+    <string name="overlay_stop">停止</string>
+    <string name="overlay_minimize">最小化</string>
+    <string name="overlay_close">关闭</string>
+    <string name="overlay_bubble_description">SmoothRec 控制</string>
+</resources>

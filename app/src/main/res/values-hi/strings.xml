@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SmoothRec</string>
+
+    <string name="nav_home">होम</string>
+    <string name="nav_recordings">रिकॉर्डिंग</string>
+
+    <string name="state_ready">तैयार</string>
+    <string name="state_requesting">अनुमति मांगी जा रही है</string>
+    <string name="state_session">सत्र सक्रिय</string>
+    <string name="state_recording">रिकॉर्डिंग जारी</string>
+    <string name="state_paused">रुका हुआ</string>
+    <string name="state_stopped">रुका</string>
+
+    <string name="hint_ready">स्क्रीन कैप्चर शुरू करने के लिए टैप करें</string>
+    <string name="hint_requesting">जारी रखने के लिए सिस्टम अनुमति दें</string>
+    <string name="hint_session">रिकॉर्ड करने के लिए बटन या फ्लोटिंग बबल उपयोग करें</string>
+    <string name="hint_recording">बैकग्राउंड में रिकॉर्डिंग · रोकने या पॉज़ करने के लिए नियंत्रण उपयोग करें</string>
+    <string name="hint_paused">रिकॉर्डिंग पॉज़ है · कभी भी फिर शुरू करें</string>
+    <string name="hint_stopped">सत्र समाप्त हुआ</string>
+
+    <string name="action_start_session">कैप्चर शुरू करें</string>
+    <string name="action_start_recording">रिकॉर्ड</string>
+    <string name="action_pause">पॉज़</string>
+    <string name="action_resume">फिर शुरू</string>
+    <string name="action_stop">रोकें</string>
+    <string name="action_end_session">सत्र बंद करें</string>
+
+    <string name="monitor_title">इंजन स्थिति</string>
+    <string name="monitor_res_fps">%1$s · %2$d/%3$d FPS</string>
+    <string name="monitor_bitrate">%1$s Mbps</string>
+    <string name="monitor_audio_active">ऑडियो: %1$s</string>
+    <string name="monitor_audio_off">कोई ऑडियो नहीं</string>
+    <string name="monitor_audio_silent">ऑडियो सिग्नल नहीं</string>
+    <string name="monitor_encoder_ready">एन्कोडर तैयार</string>
+    <string name="monitor_encoder_running">एन्कोडिंग जारी</string>
+    <string name="monitor_encoder_paused">पॉज़</string>
+    <string name="monitor_encoder_error">एन्कोडर त्रुटि</string>
+    <string name="current_settings">सक्रिय प्रोफ़ाइल</string>
+    <string name="current_settings_format">%1$s · %2$d FPS · %3$s</string>
+    <string name="preview_note">Movies/SmoothRec में सुरक्षित सहेजा गया</string>
+
+    <string name="record_start_description">रिकॉर्डिंग शुरू करें</string>
+    <string name="record_stop_description">रिकॉर्डिंग रोकें</string>
+    <string name="settings_description">सेटिंग्स</string>
+    <string name="back_description">वापस</string>
+
+    <string name="recordings_title">रिकॉर्डिंग</string>
+    <string name="recordings_count">%1$d वीडियो</string>
+    <string name="recordings_empty_title">अभी कोई रिकॉर्डिंग नहीं</string>
+    <string name="recordings_empty_hint">SmoothRec से रिकॉर्ड किए गए वीडियो यहाँ अपने आप दिखेंगे।</string>
+    <string name="recording_play">चलाएं</string>
+    <string name="recording_share">साझा करें</string>
+    <string name="recording_delete">हटाएं</string>
+    <string name="recording_delete_title">रिकॉर्डिंग हटाएं?</string>
+    <string name="recording_delete_message">“%1$s” स्थायी रूप से हटा दिया जाएगा।</string>
+    <string name="recording_deleted">रिकॉर्डिंग हटाई गई</string>
+    <string name="recording_delete_error">वीडियो हटाया नहीं जा सका</string>
+    <string name="recording_open_error">कोई वीडियो प्लेयर उपलब्ध नहीं है</string>
+    <string name="recording_share_chooser">वीडियो साझा करें</string>
+    <string name="recording_meta_format">%1$s · %2$s · %3$s</string>
+
+    <string name="settings_title">सेटिंग्स</string>
+
+    <string name="settings_quality">1. वीडियो गुणवत्ता</string>
+    <string name="settings_bitrate">बिटरेट</string>
+    <string name="quality_auto">ऑटो</string>
+    <string name="quality_low">4 Mbps</string>
+    <string name="quality_medium">8 Mbps</string>
+    <string name="quality_high">12 Mbps</string>
+    <string name="quality_ultra">16 Mbps</string>
+    <string name="quality_max">24 Mbps</string>
+    <string name="settings_duration_limit">अधिकतम अवधि</string>
+    <string name="duration_unlimited">असीमित</string>
+    <string name="duration_5m">5 मिनट</string>
+    <string name="duration_15m">15 मिनट</string>
+    <string name="duration_30m">30 मिनट</string>
+    <string name="duration_60m">60 मिनट</string>
+    <string name="duration_limit_reached">अधिकतम अवधि पूरी · वीडियो सहेजा गया</string>
+
+    <string name="settings_resolution">2. रिज़ॉल्यूशन</string>
+    <string name="resolution_screen">ऑटो</string>
+    <string name="resolution_1080p">1080p</string>
+    <string name="resolution_720p">720p</string>
+    <string name="settings_resolution_hint">बिना काटे या खींचे स्क्रीन का वास्तविक अनुपात बनाए रखता है।</string>
+
+    <string name="settings_framerate">3. फ़्रेम प्रति सेकंड (FPS)</string>
+    <string name="fps_30">30 FPS</string>
+    <string name="fps_60">60 FPS</string>
+    <string name="fps_90">90 FPS</string>
+    <string name="fps_120">120 FPS</string>
+    <string name="settings_fps_hint">केवल आपके डिस्प्ले और एन्कोडर द्वारा समर्थित दरें दिखाई जाती हैं।</string>
+
+    <string name="settings_audio">4. ऑडियो</string>
+    <string name="settings_audio_source">ऑडियो स्रोत</string>
+    <string name="audio_internal">आंतरिक</string>
+    <string name="audio_mic">माइक्रोफ़ोन</string>
+    <string name="audio_mixed">आंतरिक + माइक</string>
+    <string name="settings_channels">ऑडियो चैनल</string>
+    <string name="channel_mono">मोनो</string>
+    <string name="channel_stereo">स्टीरियो</string>
+
+    <string name="settings_watermark">5. वॉटरमार्क</string>
+    <string name="watermark_toggle_label">वीडियो में “SmoothRec” दिखाएं</string>
+    <string name="watermark_hint">अंतिम MP4 के एक कोने में हल्का, सफेद और पारदर्शी वॉटरमार्क जोड़ता है।</string>
+
+    <string name="settings_appearance">थीम, भाषा और फ्लोटिंग बबल</string>
+    <string name="settings_theme">थीम</string>
+    <string name="theme_auto">ऑटो</string>
+    <string name="theme_dark">डार्क</string>
+    <string name="theme_light">लाइट</string>
+    <string name="settings_language">भाषा</string>
+    <string name="language_auto">ऑटो</string>
+    <string name="language_es">Español</string>
+    <string name="language_en">English</string>
+    <string name="language_zh">中文</string>
+    <string name="language_hi">हिन्दी</string>
+    <string name="language_ar">العربية</string>
+    <string name="settings_bubble_opacity">फ्लोटिंग बबल पारदर्शिता (%1$d%%)</string>
+    <string name="overlay_permission">फ़्लोटिंग विंडो अनुमति</string>
+    <string name="overlay_permission_hint">गेम और अन्य ऐप्स के ऊपर फ़्लोटिंग बबल दिखाने के लिए आवश्यक।</string>
+    <string name="overlay_permission_granted">फ़्लोटिंग विंडो अनुमति पहले से चालू है।</string>
+
+    <string name="settings_updates">6. अपडेट जांचें</string>
+    <string name="update_installed_version">इंस्टॉल किया गया संस्करण: v%1$s (%2$d)</string>
+    <string name="update_check">अपडेट जांचें</string>
+    <string name="update_checking">जांच हो रही है…</string>
+    <string name="update_none">अभी तक कोई नया रिलीज़ उपलब्ध नहीं है।</string>
+    <string name="update_current">आप नवीनतम संस्करण उपयोग कर रहे हैं।</string>
+    <string name="update_error">अपडेट जांचने के लिए कनेक्ट नहीं हो सका।</string>
+    <string name="update_found">नया संस्करण %1$s उपलब्ध है</string>
+    <string name="update_download_confirm_title">अपडेट उपलब्ध (%1$s)</string>
+    <string name="update_download_confirm_action">डाउनलोड और इंस्टॉल करें</string>
+    <string name="update_title">SmoothRec अपडेट %1$s</string>
+    <string name="update_tap">डाउनलोड और इंस्टॉल करने के लिए टैप करें</string>
+    <string name="update_channel">SmoothRec अपडेट</string>
+    <string name="update_downloading">अपडेट डाउनलोड हो रहा है…</string>
+    <string name="update_allow_install">जारी रखने के लिए SmoothRec से ऐप्स इंस्टॉल करने की अनुमति दें।</string>
+
+    <string name="settings_credits">7. श्रेय</string>
+    <string name="about_creator">Keiner द्वारा विकसित</string>
+    <string name="about_subtitle">SmoothRec · स्वतंत्र स्क्रीन रिकॉर्डर</string>
+    <string name="about_tiktok">TikTok</string>
+    <string name="about_instagram">Instagram</string>
+    <string name="about_tiktok_description">TikTok प्रोफ़ाइल खोलें</string>
+    <string name="about_instagram_description">Instagram प्रोफ़ाइल खोलें</string>
+    <string name="about_no_browser">लिंक खोलने के लिए कोई ऐप उपलब्ध नहीं है।</string>
+
+    <string name="audio_fallback_permission">माइक अनुमति नहीं: केवल वीडियो रिकॉर्ड होगा।</string>
+    <string name="audio_fallback_internal">आंतरिक ऑडियो उपलब्ध नहीं: केवल वीडियो रिकॉर्ड होगा।</string>
+    <string name="audio_fallback_internal_mic">आंतरिक ऑडियो उपलब्ध नहीं: माइक्रोफ़ोन का उपयोग हो रहा है।</string>
+    <string name="audio_fallback_mic">माइक्रोफ़ोन उपलब्ध नहीं: केवल वीडियो रिकॉर्ड होगा।</string>
+    <string name="audio_fallback_mixed">ऑडियो स्रोत कैप्चर नहीं हो सके: केवल वीडियो।</string>
+    <string name="audio_fallback_mixed_mic">आंतरिक ऑडियो उपलब्ध नहीं: केवल माइक।</string>
+    <string name="audio_fallback_mixed_internal">माइक्रोफ़ोन उपलब्ध नहीं: केवल आंतरिक ऑडियो।</string>
+    <string name="audio_fallback_encoder">ऑडियो एन्कोडर विफल: केवल वीडियो रिकॉर्ड होगा।</string>
+    <string name="audio_fallback_silent">चयनित ऑडियो स्रोत मौन है।</string>
+    <string name="audio_internal_silent">स्रोत ऐप द्वारा आंतरिक ऑडियो अवरुद्ध या मौन है।</string>
+    <string name="audio_permission_denied">ऑडियो अनुमति अस्वीकृत।</string>
+    <string name="notification_permission_denied">सूचना अनुमति अस्वीकृत; फ़्लोटिंग नियंत्रण सक्रिय रहेंगे।</string>
+    <string name="audio_internal_fallback">आंतरिक ऑडियो मौन: माइक पर स्विच किया जा रहा है।</string>
+    <string name="audio_channels_fallback">डिवाइस के अनुसार ऑडियो चैनल स्वतः समायोजित किए गए।</string>
+    <string name="fallback_resolution">संगतता के लिए %1$d×%2$d · %3$d FPS पर समायोजित।</string>
+    <string name="fallback_framerate">संगतता के लिए %1$d FPS पर समायोजित।</string>
+    <string name="recording_saved">रिकॉर्डिंग Movies/SmoothRec में सहेजी गई</string>
+    <string name="recording_error">रिकॉर्डिंग त्रुटि: %1$s</string>
+
+    <string name="permission_rationale_title">अनुमतियां आवश्यक</string>
+    <string name="permission_rationale_body">ध्वनि कैप्चर करने के लिए ऑडियो अनुमति और बैकग्राउंड में सेवा चालू रखने के लिए सूचना अनुमति आवश्यक है।</string>
+    <string name="permission_rationale_continue">जारी रखें</string>
+    <string name="common_cancel">रद्द करें</string>
+
+    <string name="notification_channel_name">स्क्रीन रिकॉर्डिंग</string>
+    <string name="notification_channel_description">SmoothRec सक्रिय रहने पर स्थायी सूचना।</string>
+    <string name="notification_title">SmoothRec</string>
+    <string name="notification_text_dynamic">रिकॉर्डिंग · %1$d×%2$d · %3$d FPS</string>
+    <string name="notification_stop_action">रोकें</string>
+    <string name="notification_pause_action">पॉज़</string>
+    <string name="notification_resume_action">फिर शुरू</string>
+    <string name="notification_close_action">बंद करें</string>
+    <string name="notification_session_text">सत्र तैयार · रिकॉर्ड करने के लिए बबल टैप करें</string>
+    <string name="notification_recording_time">रिकॉर्डिंग · %1$s</string>
+    <string name="notification_paused_time">पॉज़ · %1$s</string>
+
+    <string name="overlay_start">रिकॉर्ड</string>
+    <string name="overlay_pause">पॉज़</string>
+    <string name="overlay_resume">फिर शुरू</string>
+    <string name="overlay_stop">रोकें</string>
+    <string name="overlay_minimize">छोटा करें</string>
+    <string name="overlay_close">बंद करें</string>
+    <string name="overlay_bubble_description">SmoothRec नियंत्रण</string>
+</resources>

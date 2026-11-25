@@ -16,11 +16,19 @@ interface EncoderOutput {
     }
 }
 
-/** Contrato del encoder de vídeo implementado en Fase 1. */
+/** Contrato del encoder de vídeo. */
 interface VideoEncoder {
     fun start(config: EncoderConfig, output: EncoderOutput)
     fun inputSurface(): Surface
-    /** Señala el fin del stream y espera el drenado de los buffers pendientes. */
+    fun setPaused(paused: Boolean)
+    fun setPausedOffsetUs(pausedOffsetUs: Long)
+    fun requestSyncFrame()
+    fun effectiveFps(): Int
+    fun isRunning(): Boolean
+    fun lastError(): String?
+    /** Señala el fin del stream sin esperar, para drenar audio y vídeo a la vez. */
+    fun signalEndOfStream()
+    /** Espera el drenado de los buffers pendientes. */
     fun stop()
     fun release()
 }

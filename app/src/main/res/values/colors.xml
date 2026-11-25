@@ -1,14 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background">#FF0B0B10</color>
-    <color name="surface">#FF17171F</color>
-    <color name="surface_border">#FF2A2A36</color>
-    <color name="accent_start">#FF7C4DFF</color>
-    <color name="accent_end">#FFB388FF</color>
-    <color name="recording_accent">#FFFF6B6B</color>
+    <!-- Dark palette -->
+    <color name="dark_background">#FF0D0E14</color>
+    <color name="dark_surface">#FF161822</color>
+    <color name="dark_surface_elevated">#FF1E2130</color>
+    <color name="dark_surface_border">#FF272A3A</color>
+    <color name="dark_nav_bg">#FF12141D</color>
+    <color name="dark_accent">#FF7C5CFF</color>
+    <color name="dark_accent_end">#FFA38BFF</color>
+    <color name="dark_accent_soft">#267C5CFF</color>
+    <color name="dark_recording_accent">#FFFF5A5F</color>
+    <color name="dark_paused_accent">#FFFBBF24</color>
+    <color name="dark_text_primary">#FFF5F6FA</color>
+    <color name="dark_text_secondary">#FF9CA3B8</color>
+    <color name="dark_icon_muted">#FF7B8299</color>
+    <color name="dark_chip_bg">#FF1B1E2B</color>
+    <color name="dark_divider">#FF242736</color>
+
+    <!-- Light palette -->
+    <color name="light_background">#FFF6F7FB</color>
+    <color name="light_surface">#FFFFFFFF</color>
+    <color name="light_surface_elevated">#FFEEF0F6</color>
+    <color name="light_surface_border">#FFE1E4EE</color>
+    <color name="light_nav_bg">#FFFFFFFF</color>
+    <color name="light_accent">#FF5E3FE8</color>
+    <color name="light_accent_soft">#1A5E3FE8</color>
+    <color name="light_recording_accent">#FFE53935</color>
+    <color name="light_paused_accent">#FFD97706</color>
+    <color name="light_text_primary">#FF12141C</color>
+    <color name="light_text_secondary">#FF5B6275</color>
+    <color name="light_icon_muted">#FF7D859B</color>
+    <color name="light_chip_bg">#FFF0F2F8</color>
+    <color name="light_divider">#FFE5E8F0</color>
+
+    <!-- Shared static colors -->
+    <color name="background">@color/dark_background</color>
+    <color name="surface">@color/dark_surface</color>
+    <color name="surface_border">@color/dark_surface_border</color>
+    <color name="accent_start">@color/dark_accent</color>
+    <color name="accent_end">@color/dark_accent_end</color>
+    <color name="recording_accent">@color/dark_recording_accent</color>
     <color name="stop_solid">#FFE5484D</color>
-    <color name="text_primary">#FFFFFFFF</color>
-    <color name="text_secondary">#FF9E9EAE</color>
-    <color name="icon_muted">#FF8E8EA0</color>
+    <color name="text_primary">@color/dark_text_primary</color>
+    <color name="text_secondary">@color/dark_text_secondary</color>
+    <color name="icon_muted">@color/dark_icon_muted</color>
     <color name="icon_white">#FFFFFFFF</color>
 </resources>

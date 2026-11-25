@@ -7,7 +7,7 @@ import android.media.projection.MediaProjection
 import android.util.Log
 import android.view.Surface
 
-/** Duplica la pantalla en la Surface de entrada del encoder. */
+/** Duplica la pantalla en la Surface de captura (directa o con marca de agua). */
 class ScreenCapturer(
     private val context: Context,
     private val projection: MediaProjection,
@@ -29,6 +29,14 @@ class ScreenCapturer(
             null,
             null,
         )
+    }
+
+    fun setSurface(targetSurface: Surface?) {
+        try {
+            virtualDisplay?.setSurface(targetSurface)
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "No se pudo actualizar la Surface del VirtualDisplay", e)
+        }
     }
 
     fun release() {

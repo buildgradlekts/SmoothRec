@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SmoothRec</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_recordings">Recordings</string>
+
+    <string name="state_ready">Ready</string>
+    <string name="state_requesting">Requesting access</string>
+    <string name="state_session">Session active</string>
+    <string name="state_recording">Recording</string>
+    <string name="state_paused">Paused</string>
+    <string name="state_stopped">Stopped</string>
+
+    <string name="hint_ready">Tap to start screen capture</string>
+    <string name="hint_requesting">Allow system capture to continue</string>
+    <string name="hint_session">Use the button or floating bubble to record</string>
+    <string name="hint_recording">Recording in background · use controls to pause or stop</string>
+    <string name="hint_paused">Recording paused · resume anytime</string>
+    <string name="hint_stopped">Session ended</string>
+
+    <string name="action_start_session">Start capture</string>
+    <string name="action_start_recording">Record</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_resume">Resume</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_end_session">End session</string>
+
+    <string name="monitor_title">Engine status</string>
+    <string name="monitor_res_fps">%1$s · %2$d/%3$d FPS</string>
+    <string name="monitor_bitrate">%1$s Mbps</string>
+    <string name="monitor_audio_active">Audio: %1$s</string>
+    <string name="monitor_audio_off">No audio</string>
+    <string name="monitor_audio_silent">Audio silent</string>
+    <string name="monitor_encoder_ready">Encoder ready</string>
+    <string name="monitor_encoder_running">Encoding</string>
+    <string name="monitor_encoder_paused">Paused</string>
+    <string name="monitor_encoder_error">Encoder error</string>
+    <string name="current_settings">ACTIVE PROFILE</string>
+    <string name="current_settings_format">%1$s · %2$d FPS · %3$s</string>
+    <string name="preview_note">Safely saved in Movies/SmoothRec</string>
+
+    <string name="record_start_description">Start recording</string>
+    <string name="record_stop_description">Stop recording</string>
+    <string name="settings_description">Settings</string>
+    <string name="back_description">Back</string>
+
+    <string name="recordings_title">Recordings</string>
+    <string name="recordings_count">%1$d videos</string>
+    <string name="recordings_empty_title">No recordings yet</string>
+    <string name="recordings_empty_hint">Videos recorded with SmoothRec will appear here automatically.</string>
+    <string name="recording_play">Play</string>
+    <string name="recording_share">Share</string>
+    <string name="recording_delete">Delete</string>
+    <string name="recording_delete_title">Delete recording?</string>
+    <string name="recording_delete_message">“%1$s” will be permanently deleted.</string>
+    <string name="recording_deleted">Recording deleted</string>
+    <string name="recording_delete_error">Could not delete video</string>
+    <string name="recording_open_error">No video player available</string>
+    <string name="recording_share_chooser">Share video</string>
+    <string name="recording_meta_format">%1$s · %2$s · %3$s</string>
+
+    <string name="settings_title">Settings</string>
+
+    <string name="settings_quality">1. Video quality</string>
+    <string name="settings_bitrate">Bitrate</string>
+    <string name="quality_auto">Auto</string>
+    <string name="quality_low">4 Mbps</string>
+    <string name="quality_medium">8 Mbps</string>
+    <string name="quality_high">12 Mbps</string>
+    <string name="quality_ultra">16 Mbps</string>
+    <string name="quality_max">24 Mbps</string>
+    <string name="settings_duration_limit">Max duration</string>
+    <string name="duration_unlimited">Unlimited</string>
+    <string name="duration_5m">5 min</string>
+    <string name="duration_15m">15 min</string>
+    <string name="duration_30m">30 min</string>
+    <string name="duration_60m">60 min</string>
+    <string name="duration_limit_reached">Duration limit reached · video saved</string>
+
+    <string name="settings_resolution">2. Resolution</string>
+    <string name="resolution_screen">Auto</string>
+    <string name="resolution_1080p">1080p</string>
+    <string name="resolution_720p">720p</string>
+    <string name="settings_resolution_hint">Preserves true screen aspect ratio without cropping or stretching.</string>
+
+    <string name="settings_framerate">3. Frames per second (FPS)</string>
+    <string name="fps_30">30 FPS</string>
+    <string name="fps_60">60 FPS</string>
+    <string name="fps_90">90 FPS</string>
+    <string name="fps_120">120 FPS</string>
+    <string name="settings_fps_hint">Only rates supported by your display and hardware encoder are shown.</string>
+
+    <string name="settings_audio">4. Audio</string>
+    <string name="settings_audio_source">Audio source</string>
+    <string name="audio_internal">Internal</string>
+    <string name="audio_mic">Microphone</string>
+    <string name="audio_mixed">Internal + Mic</string>
+    <string name="settings_channels">Audio channels</string>
+    <string name="channel_mono">Mono</string>
+    <string name="channel_stereo">Stereo</string>
+
+    <string name="settings_watermark">5. Watermark</string>
+    <string name="watermark_toggle_label">Show “SmoothRec” in video</string>
+    <string name="watermark_hint">Adds a subtle, high-transparency white mark in a fixed corner of the final MP4.</string>
+
+    <string name="settings_appearance">Appearance, language &amp; bubble</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_auto">Auto</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
+    <string name="settings_language">Language</string>
+    <string name="language_auto">Auto</string>
+    <string name="language_es">Español</string>
+    <string name="language_en">English</string>
+    <string name="language_zh">中文</string>
+    <string name="language_hi">हिन्दी</string>
+    <string name="language_ar">العربية</string>
+    <string name="settings_bubble_opacity">Floating bubble opacity (%1$d%%)</string>
+    <string name="overlay_permission">Floating window permission</string>
+    <string name="overlay_permission_hint">Required to display the floating bubble over games and other apps.</string>
+    <string name="overlay_permission_granted">Floating window permission is already enabled.</string>
+
+    <string name="settings_updates">6. Check for updates</string>
+    <string name="update_installed_version">Installed version: v%1$s (%2$d)</string>
+    <string name="update_check">Check for updates</string>
+    <string name="update_checking">Checking…</string>
+    <string name="update_none">No new releases published yet.</string>
+    <string name="update_current">You already have the latest version.</string>
+    <string name="update_error">Could not connect to check for updates.</string>
+    <string name="update_found">New version %1$s available</string>
+    <string name="update_download_confirm_title">Update available (%1$s)</string>
+    <string name="update_download_confirm_action">Download &amp; install</string>
+    <string name="update_title">SmoothRec update %1$s</string>
+    <string name="update_tap">Tap to download and install</string>
+    <string name="update_channel">SmoothRec updates</string>
+    <string name="update_downloading">Downloading update…</string>
+    <string name="update_allow_install">Allow installing apps from SmoothRec to continue.</string>
+
+    <string name="settings_credits">7. Credits</string>
+    <string name="about_creator">Developed by Keiner</string>
+    <string name="about_subtitle">SmoothRec · Independent screen recorder</string>
+    <string name="about_tiktok">TikTok</string>
+    <string name="about_instagram">Instagram</string>
+    <string name="about_tiktok_description">Open TikTok profile</string>
+    <string name="about_instagram_description">Open Instagram profile</string>
+    <string name="about_no_browser">No app available to open this link.</string>
+
+    <string name="audio_fallback_permission">Microphone permission missing: recording video only.</string>
+    <string name="audio_fallback_internal">Internal audio unavailable: recording video only.</string>
+    <string name="audio_fallback_internal_mic">Internal audio unavailable: using microphone.</string>
+    <string name="audio_fallback_mic">Microphone unavailable: recording video only.</string>
+    <string name="audio_fallback_mixed">Could not capture audio sources: video only.</string>
+    <string name="audio_fallback_mixed_mic">Internal audio unavailable: microphone only.</string>
+    <string name="audio_fallback_mixed_internal">Microphone unavailable: internal audio only.</string>
+    <string name="audio_fallback_encoder">Audio encoder failed: recording video only.</string>
+    <string name="audio_fallback_silent">Selected audio source is silent.</string>
+    <string name="audio_internal_silent">Internal audio is muted or blocked by the source app.</string>
+    <string name="audio_permission_denied">Audio permission denied.</string>
+    <string name="notification_permission_denied">Notification permission denied; floating controls remain active.</string>
+    <string name="audio_internal_fallback">Internal audio silent: falling back to microphone.</string>
+    <string name="audio_channels_fallback">Audio channels adjusted automatically for this device.</string>
+    <string name="fallback_resolution">Adjusted to %1$d×%2$d · %3$d FPS for device compatibility.</string>
+    <string name="fallback_framerate">Adjusted to %1$d FPS for device compatibility.</string>
+    <string name="recording_saved">Recording saved to Movies/SmoothRec</string>
+    <string name="recording_error">Recording error: %1$s</string>
+
+    <string name="permission_rationale_title">Permissions required</string>
+    <string name="permission_rationale_body">SmoothRec needs audio permission to capture sound and notifications to keep the recording service active in the background.</string>
+    <string name="permission_rationale_continue">Continue</string>
+    <string name="common_cancel">Cancel</string>
+
+    <string name="notification_channel_name">Screen Recording</string>
+    <string name="notification_channel_description">Persistent notification while SmoothRec is active.</string>
+    <string name="notification_title">SmoothRec</string>
+    <string name="notification_text_dynamic">Recording · %1$d×%2$d · %3$d FPS</string>
+    <string name="notification_stop_action">Stop</string>
+    <string name="notification_pause_action">Pause</string>
+    <string name="notification_resume_action">Resume</string>
+    <string name="notification_close_action">Close</string>
+    <string name="notification_session_text">Session ready · tap bubble to record</string>
+    <string name="notification_recording_time">Recording · %1$s</string>
+    <string name="notification_paused_time">Paused · %1$s</string>
+
+    <string name="overlay_start">Record</string>
+    <string name="overlay_pause">Pause</string>
+    <string name="overlay_resume">Resume</string>
+    <string name="overlay_stop">Stop</string>
+    <string name="overlay_minimize">Minimize</string>
+    <string name="overlay_close">Close</string>
+    <string name="overlay_bubble_description">SmoothRec controls</string>
+</resources>

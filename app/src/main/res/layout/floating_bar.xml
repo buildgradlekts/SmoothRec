@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/overlayRoot"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <!-- Minimized corner floating bubble (44dp) -->
+    <FrameLayout
+        android:id="@+id/overlayBubble"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/bubble_background"
+        android:contentDescription="@string/overlay_bubble_description"
+        android:elevation="6dp">
+
+        <ImageView
+            android:id="@+id/overlayBubbleIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/overlay_bubble_description"
+            android:src="@drawable/ic_nav_camera"
+            android:tint="@color/icon_white" />
+
+        <View
+            android:id="@+id/overlayBubbleDot"
+            android:layout_width="9dp"
+            android:layout_height="9dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="5dp"
+            android:background="@drawable/fab_background_stop"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+    <!-- Expanded compact control pill -->
+    <LinearLayout
+        android:id="@+id/overlayExpanded"
+        android:layout_width="wrap_content"
+        android:layout_height="44dp"
+        android:background="@drawable/overlay_bar_background"
+        android:elevation="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        android:visibility="gone">
+
+        <ImageButton
+            android:id="@+id/overlayRecordStop"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:background="@drawable/overlay_button_background"
+            android:contentDescription="@string/overlay_start"
+            android:padding="7dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_record"
+            android:tint="@color/dark_recording_accent" />
+
+        <ImageButton
+            android:id="@+id/overlayPauseResume"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:background="@drawable/overlay_button_background"
+            android:contentDescription="@string/overlay_pause"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_pause"
+            android:tint="@color/icon_white"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/overlayTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:minWidth="64dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:text="00:00:00"
+            android:textColor="@color/icon_white"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:background="#33FFFFFF" />
+
+        <ImageButton
+            android:id="@+id/overlayMinimize"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/overlay_button_background"
+            android:contentDescription="@string/overlay_minimize"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_minimize"
+            android:tint="#FFD6D6DE" />
+
+        <ImageButton
+            android:id="@+id/overlayClose"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/overlay_button_background"
+            android:contentDescription="@string/overlay_close"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_overlay_close"
+            android:tint="#FFD6D6DE" />
+
+    </LinearLayout>
+
+</FrameLayout>

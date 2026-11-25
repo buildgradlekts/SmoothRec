@@ -1,20 +1,28 @@
 package com.smoothrec.app.audio
 
+import android.media.AudioFormat
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.os.Process
 import android.util.Log
 import com.smoothrec.app.encoder.EncoderOutput
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.LockSupport
 import kotlin.math.abs
 import kotlin.math.min
 
 /**
- * Codificador AAC en un hilo propio. Durante el arranque alimenta silencio para
- * obtener el formato de salida (csd-0) antes de iniciar el vídeo; esas muestras
- * de relleno no se escriben en el MP4.
+ * Codificador AAC en hilo de prioridad de audio urgente.
+ *
+ * Sincronización A/V:
+ * - Usa CLOCK_MONOTONIC común con el vídeo (con soporte para pausa/reanudación).
+ * - Ancla tras la primera lectura real (cuando AudioRecord.getTimestamp() ya está
+ *   disponible) y compensa la latencia basal del búfer HAL.
+ * - Solo contabiliza las muestras realmente leídas y corrige desbordamientos bajo
+ *   carga de videojuegos sin reiniciar el códec.
  */
 class AacAudioEncoder(
     private val provider: PcmProvider,
@@ -23,15 +31,22 @@ class AacAudioEncoder(
     private val onSilent: () -> Unit = {},
 ) {
 
+    enum class AudioHealthState { READY, ACTIVE, PAUSED, SILENT, ERROR }
+
     private val formatLatch = CountDownLatch(1)
     private val finishedLatch = CountDownLatch(1)
     private val stopping = AtomicBoolean(false)
-    @Volatile
-    private var forwarding = false
+    private val formatReady = AtomicBoolean(false)
+
+    @Volatile private var forwarding = false
+    @Volatile private var paused = false
+    @Volatile private var pausedOffsetNs = 0L
+    @Volatile private var reanchorNeeded = false
+    @Volatile private var healthState = AudioHealthState.READY
+
     private var codec: MediaCodec? = null
     private var thread: Thread? = null
 
-    /** Bloquea hasta que el formato AAC está disponible; false si no se consiguió. */
     fun start(): Boolean {
         val mediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
         val format = MediaFormat.createAudioFormat(
@@ -40,6 +55,9 @@ class AacAudioEncoder(
             spec.channelCount,
         ).apply {
             setInteger(MediaFormat.KEY_BIT_RATE, if (spec.stereo) 96_000 else 64_000)
+            setInteger(MediaFormat.KEY_CHANNEL_COUNT, spec.channelCount)
+            setInteger(MediaFormat.KEY_SAMPLE_RATE, spec.sampleRate)
+            setInteger(MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_16BIT)
             setInteger(
                 MediaFormat.KEY_AAC_PROFILE,
                 MediaCodecInfo.CodecProfileLevel.AACObjectLC,
@@ -53,177 +71,261 @@ class AacAudioEncoder(
         val ready = formatLatch.await(3, TimeUnit.SECONDS)
         if (!ready) {
             Log.w(TAG, "El encoder AAC no entregó su formato a tiempo")
+            healthState = AudioHealthState.ERROR
             stop()
         }
         return ready
     }
 
-    /** Empieza a enviar audio real; los PTS arrancan en cero en este momento. */
     fun resume() {
         forwarding = true
+        healthState = AudioHealthState.ACTIVE
     }
+
+    fun pause() {
+        paused = true
+        healthState = AudioHealthState.PAUSED
+    }
+
+    fun resumeAfterPause(totalPausedNs: Long) {
+        pausedOffsetNs = totalPausedNs.coerceAtLeast(0L)
+        reanchorNeeded = true
+        paused = false
+        healthState = AudioHealthState.ACTIVE
+    }
+
+    fun state(): AudioHealthState = healthState
 
     fun stop() {
         if (!stopping.compareAndSet(false, true)) {
-            // Otra llamada ya está esperando; no salimos hasta que el hilo haya
-            // drenado y liberado el codec.
             try {
                 finishedLatch.await(5, TimeUnit.SECONDS)
-            } catch (e: InterruptedException) {
+            } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()
             }
             return
         }
         try {
             finishedLatch.await(5, TimeUnit.SECONDS)
-        } catch (e: InterruptedException) {
+        } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
     }
 
     private fun pump(mediaCodec: MediaCodec) {
+        Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
+
         val frameSamples = 1024
         val pcm = ShortArray(frameSamples * spec.channelCount)
-        var ptsUs = 0L
         val info = MediaCodec.BufferInfo()
-        val frameNs = frameSamples * 1_000_000_000L / spec.sampleRate
-        var nextInputNs = 0L
-        val silenceFramesToDetect = spec.sampleRate / frameSamples * 2
+
+        var rateHz = spec.sampleRate.coerceAtLeast(1)
+        var framesQueued = 0L
+        var anchorFrame = 0L
+        var anchorNs = 0L
+        var baselineHalOffsetNs = 0L
+        var anchored = false
+        var lastQueuedPtsUs = 0L
+        var minForwardedPtsUs = -1L
+        var firstInputPtsUs = -1L
+        var lastInputPtsUs = -1L
+        var firstOutputPtsUs = -1L
+        var lastOutputPtsUs = -1L
+        var overrunFixes = 0
+        var silenceFramesToDetect = (rateHz / frameSamples) * 2
         var silentFrames = 0
         var silenceReported = false
 
-        // Medición del PCM real entregado al codificador, antes de AAC.
-        var statFrames = 0L
-        var statReadSamples = 0L
-        var statSamples = 0L
-        var statNonZero = 0L
-        var statSumSq = 0.0
-        var statMax = 0
-        var lastStatNs = System.nanoTime()
-
-        fun deliverOutput(index: Int) {
-            if (forwarding && info.size > 0 &&
-                info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG == 0
-            ) {
-                val buffer = mediaCodec.getOutputBuffer(index)
-                if (buffer != null) {
-                    buffer.position(info.offset)
-                    buffer.limit(info.offset + info.size)
-                    output.onEncodedData(EncoderOutput.TRACK_AUDIO, buffer, info)
+        fun drainPendingOutputs(maxLoops: Int = 8) {
+            var loops = 0
+            while (loops++ < maxLoops) {
+                val outIndex = mediaCodec.dequeueOutputBuffer(info, 0L)
+                when {
+                    outIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                        output.onOutputFormatChanged(EncoderOutput.TRACK_AUDIO, mediaCodec.outputFormat)
+                        formatReady.set(true)
+                        formatLatch.countDown()
+                    }
+                    outIndex >= 0 -> {
+                        val isConfig = info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
+                        val minPts = minForwardedPtsUs
+                        val validForward = forwarding && !paused && !isConfig && info.size > 0 &&
+                            minPts >= 0L && info.presentationTimeUs >= minPts
+                        if (validForward) {
+                            if (firstOutputPtsUs < 0) firstOutputPtsUs = info.presentationTimeUs
+                            if (info.presentationTimeUs <= lastOutputPtsUs) {
+                                info.presentationTimeUs = lastOutputPtsUs + 1L
+                            }
+                            lastOutputPtsUs = info.presentationTimeUs
+                            val buffer = mediaCodec.getOutputBuffer(outIndex)
+                            if (buffer != null) {
+                                buffer.position(info.offset)
+                                buffer.limit(info.offset + info.size)
+                                output.onEncodedData(EncoderOutput.TRACK_AUDIO, buffer, info)
+                            }
+                        }
+                        mediaCodec.releaseOutputBuffer(outIndex, false)
+                    }
+                    else -> break
                 }
             }
-            mediaCodec.releaseOutputBuffer(index, false)
         }
 
         try {
             while (!stopping.get()) {
+                // 1. Arranque: emitir silencio solo hasta obtener csd-0 y drenar salidas.
+                if (!forwarding && formatReady.get()) {
+                    drainPendingOutputs()
+                    LockSupport.parkNanos(2_000_000L)
+                    continue
+                }
+
+                // 2. Pausa: seguir drenando AudioRecord para no perder permisos ni
+                // llenar el ring buffer de AudioPlaybackCapture, sin codificar.
+                if (forwarding && paused) {
+                    provider.read(pcm)
+                    drainPendingOutputs()
+                    continue
+                }
+
+                // 3. Captura PCM real antes de obtener el input buffer, para anclar
+                // el reloj exactamente al instante real de captura.
+                val read: Int
+                val readDoneNs: Long
+                if (forwarding) {
+                    read = provider.read(pcm)
+                    readDoneNs = System.nanoTime()
+                    if (read <= 0) {
+                        drainPendingOutputs()
+                        LockSupport.parkNanos(2_000_000L)
+                        continue
+                    }
+                } else {
+                    java.util.Arrays.fill(pcm, 0)
+                    read = pcm.size
+                    readDoneNs = 0L
+                }
+
                 val inputIndex = mediaCodec.dequeueInputBuffer(INPUT_TIMEOUT_US)
                 if (inputIndex >= 0) {
                     val input = mediaCodec.getInputBuffer(inputIndex)
                     if (input != null) {
-                        // Un frame PCM equivale a frameNs de tiempo real. Sin este
-                        // ritmo el codificador genera PTS mucho más rápido que
-                        // la vídeo y el archivo acaba con audio muy alargado.
+                        val readFrames = (read / spec.channelCount).coerceAtLeast(1)
+                        val ptsUs: Long
                         if (forwarding) {
-                            val now = System.nanoTime()
-                            if (nextInputNs == 0L || now - nextInputNs > 5 * frameNs) {
-                                nextInputNs = now
+                            val currentPausedOffsetNs = pausedOffsetNs
+                            val frameDurationNs = (readFrames.toLong() * 1_000_000_000L) / rateHz
+                            val wallStartNs = (readDoneNs - frameDurationNs) - currentPausedOffsetNs
+
+                            if (!anchored) {
+                                val clock = provider.clock()
+                                if (clock != null) {
+                                    rateHz = clock.sampleRate.coerceAtLeast(1)
+                                    silenceFramesToDetect = (rateHz / frameSamples) * 2
+                                    val hwStartNs = (clock.nanoTime -
+                                        (clock.framePosition * 1_000_000_000L) / rateHz) -
+                                        currentPausedOffsetNs
+                                    anchorNs = hwStartNs
+                                    anchorFrame = framesQueued
+                                    baselineHalOffsetNs = (wallStartNs - hwStartNs)
+                                        .coerceIn(0L, 120_000_000L)
+                                    CaptureDiagnostics.log(
+                                        "Audio anclado a getTimestamp: frame=${clock.framePosition} " +
+                                            "rate=$rateHz halOffset=${baselineHalOffsetNs / 1_000_000}ms",
+                                    )
+                                } else {
+                                    anchorNs = wallStartNs
+                                    anchorFrame = framesQueued
+                                    baselineHalOffsetNs = 0L
+                                    CaptureDiagnostics.log("Audio anclado a nanoTime (sin getTimestamp)")
+                                }
+                                anchored = true
+                            } else if (reanchorNeeded) {
+                                reanchorNeeded = false
+                                val minSafeStartNs = (lastQueuedPtsUs + 1_000L) * 1_000L
+                                anchorNs = maxOf(wallStartNs - baselineHalOffsetNs, minSafeStartNs)
+                                anchorFrame = framesQueued
                             }
-                            val waitNs = nextInputNs - now
-                            if (waitNs > 0) java.util.concurrent.locks.LockSupport.parkNanos(waitNs)
-                            nextInputNs += frameNs
+
+                            var frameStartNs = anchorNs +
+                                ((framesQueued - anchorFrame) * 1_000_000_000L) / rateHz
+
+                            // Compensación de desbordamientos bajo carga de juego o deriva de reloj.
+                            val expectedWallStartNs = frameStartNs + baselineHalOffsetNs
+                            val driftNs = wallStartNs - expectedWallStartNs
+                            if (driftNs > OVERRUN_THRESHOLD_NS) {
+                                overrunFixes++
+                                val recoveredStartNs = wallStartNs - baselineHalOffsetNs
+                                anchorNs += recoveredStartNs - frameStartNs
+                                frameStartNs = recoveredStartNs
+                                Log.w(TAG, "Overrun de audio corregido (+${driftNs / 1_000_000} ms)")
+                                CaptureDiagnostics.log(
+                                    "Audio overrun #$overrunFixes corregido (+${driftNs / 1_000_000} ms)",
+                                )
+                            } else if (driftNs < -OVERRUN_THRESHOLD_NS) {
+                                val minSafe = (lastQueuedPtsUs + 100L) * 1_000L
+                                val corrected = maxOf(wallStartNs - baselineHalOffsetNs, minSafe)
+                                anchorNs += corrected - frameStartNs
+                                frameStartNs = corrected
+                            } else if (abs(driftNs) > GENTLE_DRIFT_THRESHOLD_NS) {
+                                val nudge = driftNs / 64L
+                                anchorNs += nudge
+                                frameStartNs += nudge
+                            }
+
+                            var candidatePtsUs = (frameStartNs / 1_000L).coerceAtLeast(0L)
+                            if (minForwardedPtsUs < 0L) {
+                                minForwardedPtsUs = candidatePtsUs
+                            } else if (candidatePtsUs <= lastQueuedPtsUs) {
+                                candidatePtsUs = lastQueuedPtsUs + 1L
+                            }
+                            ptsUs = candidatePtsUs
+                        } else {
+                            ptsUs = 0L
                         }
 
-                        // PcmSource rellena el frame completo; si la fuente no
-                        // entrega datos quedan ceros, pero con el PTS correcto.
-                        java.util.Arrays.fill(pcm, 0)
-                        val read = if (forwarding) provider.read(pcm) else pcm.size
-                        if (forwarding) {
-                            statFrames++
-                            statReadSamples += read
-                            for (sample in pcm) {
-                                val value = abs(sample.toInt())
-                                statSamples++
-                                if (value > 0) statNonZero++
-                                statSumSq += sample.toDouble() * sample.toDouble()
-                                if (value > statMax) statMax = value
-                            }
-                            val now = System.nanoTime()
-                            if (now - lastStatNs >= 2_000_000_000L && statSamples > 0) {
-                                val avgRead = statReadSamples.toDouble() / statFrames
-                                val nonZeroPct = 100.0 * statNonZero / statSamples
-                                val rms = kotlin.math.sqrt(statSumSq / statSamples)
-                                Log.i(
-                                    TAG,
-                                    "PCM frames=$statFrames leídas/frame=${"%.1f".format(avgRead)} " +
-                                        "no_cero=${"%.1f".format(nonZeroPct)}% " +
-                                        "RMS=${"%.1f".format(rms)} pico=$statMax " +
-                                        "PTS=${"%.3f".format(ptsUs / 1_000_000.0)}s",
-                                )
-                                statFrames = 0
-                                statReadSamples = 0
-                                statSamples = 0
-                                statNonZero = 0
-                                statSumSq = 0.0
-                                statMax = 0
-                                lastStatNs = now
-                            }
-                        }
                         if (forwarding && !silenceReported) {
-                            silentFrames = if (read > 0 && hasSignal(pcm, read)) {
-                                0
-                            } else {
-                                silentFrames + 1
-                            }
+                            silentFrames = if (hasSignal(pcm, read)) 0 else silentFrames + 1
                             if (silentFrames >= silenceFramesToDetect) {
                                 silenceReported = true
+                                healthState = AudioHealthState.SILENT
                                 Log.w(TAG, "La fuente de audio seleccionada no entrega señal")
+                                CaptureDiagnostics.log(
+                                    "Encoder: $silentFrames frames sin señal (PTS=${"%.2f".format(ptsUs / 1_000_000.0)}s)",
+                                )
                                 onSilent()
                             }
                         }
+
                         input.clear()
                         val shortBuffer = input.asShortBuffer()
-                        val count = min(pcm.size, shortBuffer.remaining())
+                        val count = min(read, shortBuffer.remaining())
                         if (count > 0) {
                             shortBuffer.put(pcm, 0, count)
                             mediaCodec.queueInputBuffer(inputIndex, 0, count * 2, ptsUs, 0)
-                        }
-                        if (forwarding) {
-                            ptsUs += frameSamples * 1_000_000L / spec.sampleRate
+                            if (forwarding) {
+                                if (firstInputPtsUs < 0) firstInputPtsUs = ptsUs
+                                lastInputPtsUs = ptsUs
+                                lastQueuedPtsUs = ptsUs
+                                framesQueued += (count / spec.channelCount).toLong()
+                            }
                         }
                     }
                 }
 
-                when (val outputIndex = mediaCodec.dequeueOutputBuffer(info, OUTPUT_TIMEOUT_US)) {
-                    MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                        output.onOutputFormatChanged(
-                            EncoderOutput.TRACK_AUDIO,
-                            mediaCodec.outputFormat,
-                        )
-                        formatLatch.countDown()
-                    }
-                    MediaCodec.INFO_TRY_AGAIN_LATER,
-                    MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED -> Unit
-                    else -> deliverOutput(outputIndex)
-                }
+                drainPendingOutputs()
             }
 
-            // Fin de stream: se drenan también las muestras finales al muxer.
-            var eosQueued = false
-            while (!eosQueued) {
-                val index = mediaCodec.dequeueInputBuffer(INPUT_TIMEOUT_US)
-                if (index >= 0) {
-                    mediaCodec.queueInputBuffer(
-                        index,
-                        0,
-                        0,
-                        ptsUs,
-                        MediaCodec.BUFFER_FLAG_END_OF_STREAM,
-                    )
-                    eosQueued = true
-                } else {
-                    break
-                }
+            // Fin de stream
+            val eosIndex = mediaCodec.dequeueInputBuffer(INPUT_TIMEOUT_US)
+            if (eosIndex >= 0) {
+                mediaCodec.queueInputBuffer(
+                    eosIndex,
+                    0,
+                    0,
+                    lastQueuedPtsUs,
+                    MediaCodec.BUFFER_FLAG_END_OF_STREAM,
+                )
             }
             var eosReceived = false
             var guard = 0
@@ -231,17 +333,38 @@ class AacAudioEncoder(
                 val index = mediaCodec.dequeueOutputBuffer(info, OUTPUT_TIMEOUT_US)
                 if (index >= 0) {
                     eosReceived = info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
-                    deliverOutput(index)
+                    val isConfig = info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
+                    val minPts = minForwardedPtsUs
+                    if (forwarding && !isConfig && info.size > 0 && minPts >= 0L &&
+                        info.presentationTimeUs >= minPts
+                    ) {
+                        if (info.presentationTimeUs <= lastOutputPtsUs) {
+                            info.presentationTimeUs = lastOutputPtsUs + 1L
+                        }
+                        lastOutputPtsUs = info.presentationTimeUs
+                        val buffer = mediaCodec.getOutputBuffer(index)
+                        if (buffer != null) {
+                            buffer.position(info.offset)
+                            buffer.limit(info.offset + info.size)
+                            output.onEncodedData(EncoderOutput.TRACK_AUDIO, buffer, info)
+                        }
+                    }
+                    mediaCodec.releaseOutputBuffer(index, false)
                 }
             }
-            if (!eosReceived) Log.w(TAG, "No se recibió el EOS del codificador AAC")
+            val summary = "AAC resumen: rate=$rateHz frames=$framesQueued overruns=$overrunFixes " +
+                "PTS entrada $firstInputPtsUs..$lastInputPtsUs us, " +
+                "PTS salida $firstOutputPtsUs..$lastOutputPtsUs us"
+            Log.i(TAG, summary)
+            CaptureDiagnostics.log(summary)
         } catch (e: Exception) {
+            healthState = AudioHealthState.ERROR
             Log.e(TAG, "Error en el hilo del encoder AAC", e)
+            CaptureDiagnostics.log("Encoder AAC: error ${e.javaClass.simpleName}: ${e.message}")
         } finally {
             try {
                 mediaCodec.stop()
-            } catch (e: IllegalStateException) {
-                Log.w(TAG, "El codec AAC ya estaba detenido", e)
+            } catch (_: IllegalStateException) {
             }
             try {
                 mediaCodec.release()
@@ -255,7 +378,7 @@ class AacAudioEncoder(
 
     private fun hasSignal(buffer: ShortArray, count: Int): Boolean {
         for (i in 0 until count) {
-            if (buffer[i].toInt() != 0) return true
+            if (abs(buffer[i].toInt()) >= SIGNAL_THRESHOLD) return true
         }
         return false
     }
@@ -264,5 +387,8 @@ class AacAudioEncoder(
         const val TAG = "AacAudioEncoder"
         const val INPUT_TIMEOUT_US = 20_000L
         const val OUTPUT_TIMEOUT_US = 20_000L
+        const val OVERRUN_THRESHOLD_NS = 65_000_000L
+        const val GENTLE_DRIFT_THRESHOLD_NS = 20_000_000L
+        const val SIGNAL_THRESHOLD = 8
     }
 }

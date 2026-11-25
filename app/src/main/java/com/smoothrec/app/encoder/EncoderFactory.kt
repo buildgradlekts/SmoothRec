@@ -2,15 +2,17 @@ package com.smoothrec.app.encoder
 
 import android.media.MediaCodecInfo
 import android.media.MediaCodecList
+import android.media.MediaFormat
+import android.os.Build
 import android.util.Log
 
-/** Selecciona el encoder H.264 hardware disponible en el dispositivo. */
+/** Selecciona el encoder H.264 hardware más adecuado disponible en el dispositivo. */
 object EncoderFactory {
 
     fun create(config: EncoderConfig): VideoEncoder {
         val names = codecNames(config)
         if (names.isEmpty()) {
-            throw IllegalStateException("No hay encoder H.264 hardware disponible")
+            throw IllegalStateException("No hay encoder H.264 disponible en el dispositivo")
         }
 
         var lastError: Exception? = null
@@ -26,38 +28,55 @@ object EncoderFactory {
         throw lastError ?: IllegalStateException("No se pudo crear ningún encoder")
     }
 
-    /** Nombres de codec hardware que se intentarán, en el mismo orden que en create(). */
+    /** Nombres de codec que se intentarán, priorizando aceleración por hardware. */
     fun codecNames(config: EncoderConfig): List<String> {
-        val list = MediaCodecList(MediaCodecList.ALL_CODECS)
+        val infos = MediaCodecList(MediaCodecList.ALL_CODECS).codecInfos
+        val avcEncoders = infos.filter { info ->
+            info.isEncoder && info.supportedTypes.any { it.equals(MediaFormat.MIMETYPE_VIDEO_AVC, ignoreCase = true) }
+        }
         val names = mutableListOf<String>()
 
-        // Preferimos el C2 de Qualcomm detectado en el análisis del dispositivo.
         for (preferred in PREFERRED_CODECS) {
-            if (list.codecInfos.any { it.name == preferred && it.isEncoder && !isSoftware(preferred) }) {
-                names.add(preferred)
+            val match = avcEncoders.firstOrNull { it.name == preferred && !isSoftware(it) }
+            if (match != null) names.add(match.name)
+        }
+
+        // Otros encoders hardware del dispositivo (MediaTek, Exynos, Kirin, etc.)
+        for (info in avcEncoders) {
+            if (!isSoftware(info) && info.name !in names) {
+                names.add(info.name)
             }
         }
 
         if (names.isEmpty()) {
-            val selected = list.findEncoderForFormat(config.toMediaFormat())
-            if (selected != null && !isSoftware(selected)) {
-                names.add(selected)
-            }
+            val selected = MediaCodecList(MediaCodecList.ALL_CODECS)
+                .findEncoderForFormat(config.toMediaFormat(includeProfileLevel = false, includeRealtimeHints = false))
+            if (selected != null) names.add(selected)
         }
         return names
     }
 
-    /** Información real del códec que se usará, para consultar sus VideoCapabilities. */
+    /** Información real del códec principal, para consultar sus VideoCapabilities. */
     fun primaryCodecInfo(config: EncoderConfig): MediaCodecInfo? {
         val name = codecNames(config).firstOrNull() ?: return null
         return MediaCodecList(MediaCodecList.ALL_CODECS).codecInfos
             .firstOrNull { it.name == name && it.isEncoder }
     }
 
-    private val PREFERRED_CODECS = arrayOf("c2.qti.avc.encoder", "OMX.qcom.video.encoder.avc")
+    private val PREFERRED_CODECS = arrayOf(
+        "c2.qti.avc.encoder",
+        "OMX.qcom.video.encoder.avc",
+        "c2.mtk.avc.encoder",
+        "OMX.MTK.VIDEO.ENCODER.AVC",
+        "c2.exynos.avc.encoder",
+        "OMX.Exynos.AVC.Encoder",
+    )
 
-    private fun isSoftware(name: String): Boolean {
-        val n = name.lowercase()
+    private fun isSoftware(info: MediaCodecInfo): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return info.isSoftwareOnly
+        }
+        val n = info.name.lowercase()
         return n.startsWith("c2.android.") || n.startsWith("c2.google.") || n.startsWith("omx.google.")
     }
 

@@ -1,11 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.SmoothRec" parent="android:style/Theme.Material.NoActionBar">
-        <item name="android:colorPrimary">@color/accent_start</item>
-        <item name="android:colorAccent">@color/accent_start</item>
-        <item name="android:windowBackground">@color/background</item>
-        <item name="android:statusBarColor">@color/background</item>
-        <item name="android:navigationBarColor">@color/background</item>
+    <style name="Theme.SmoothRec" parent="Theme.SmoothRec.Dark" />
+
+    <style name="Theme.SmoothRec.Dark" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:colorPrimary">@color/dark_accent</item>
+        <item name="android:colorAccent">@color/dark_accent</item>
+        <item name="android:windowBackground">@color/dark_background</item>
+        <item name="android:statusBarColor">@color/dark_background</item>
+        <item name="android:navigationBarColor">@color/dark_nav_bg</item>
         <item name="android:windowLightStatusBar">false</item>
+
+        <item name="srBackground">@color/dark_background</item>
+        <item name="srSurface">@color/dark_surface</item>
+        <item name="srSurfaceElevated">@color/dark_surface_elevated</item>
+        <item name="srSurfaceBorder">@color/dark_surface_border</item>
+        <item name="srNavBarBackground">@color/dark_nav_bg</item>
+        <item name="srAccent">@color/dark_accent</item>
+        <item name="srAccentSoft">@color/dark_accent_soft</item>
+        <item name="srRecordingAccent">@color/dark_recording_accent</item>
+        <item name="srPausedAccent">@color/dark_paused_accent</item>
+        <item name="srTextPrimary">@color/dark_text_primary</item>
+        <item name="srTextSecondary">@color/dark_text_secondary</item>
+        <item name="srIconMuted">@color/dark_icon_muted</item>
+        <item name="srChipBg">@color/dark_chip_bg</item>
+        <item name="srChipSelectedBg">@color/dark_accent</item>
+        <item name="srChipSelectedText">@color/icon_white</item>
+        <item name="srDivider">@color/dark_divider</item>
+    </style>
+
+    <style name="Theme.SmoothRec.Light" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:colorPrimary">@color/light_accent</item>
+        <item name="android:colorAccent">@color/light_accent</item>
+        <item name="android:windowBackground">@color/light_background</item>
+        <item name="android:statusBarColor">@color/light_background</item>
+        <item name="android:navigationBarColor">@color/light_nav_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+
+        <item name="srBackground">@color/light_background</item>
+        <item name="srSurface">@color/light_surface</item>
+        <item name="srSurfaceElevated">@color/light_surface_elevated</item>
+        <item name="srSurfaceBorder">@color/light_surface_border</item>
+        <item name="srNavBarBackground">@color/light_nav_bg</item>
+        <item name="srAccent">@color/light_accent</item>
+        <item name="srAccentSoft">@color/light_accent_soft</item>
+        <item name="srRecordingAccent">@color/light_recording_accent</item>
+        <item name="srPausedAccent">@color/light_paused_accent</item>
+        <item name="srTextPrimary">@color/light_text_primary</item>
+        <item name="srTextSecondary">@color/light_text_secondary</item>
+        <item name="srIconMuted">@color/light_icon_muted</item>
+        <item name="srChipBg">@color/light_chip_bg</item>
+        <item name="srChipSelectedBg">@color/light_accent</item>
+        <item name="srChipSelectedText">@color/icon_white</item>
+        <item name="srDivider">@color/light_divider</item>
     </style>
 </resources>

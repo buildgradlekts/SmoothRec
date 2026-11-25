@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="srBackground" format="color" />
+    <attr name="srSurface" format="color" />
+    <attr name="srSurfaceElevated" format="color" />
+    <attr name="srSurfaceBorder" format="color" />
+    <attr name="srNavBarBackground" format="color" />
+    <attr name="srAccent" format="color" />
+    <attr name="srAccentSoft" format="color" />
+    <attr name="srRecordingAccent" format="color" />
+    <attr name="srPausedAccent" format="color" />
+    <attr name="srTextPrimary" format="color" />
+    <attr name="srTextSecondary" format="color" />
+    <attr name="srIconMuted" format="color" />
+    <attr name="srChipBg" format="color" />
+    <attr name="srChipSelectedBg" format="color" />
+    <attr name="srChipSelectedText" format="color" />
+    <attr name="srDivider" format="color" />
+</resources>

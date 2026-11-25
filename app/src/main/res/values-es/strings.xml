@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SmoothRec</string>
+
+    <string name="nav_home">Inicio</string>
+    <string name="nav_recordings">Grabaciones</string>
+
+    <string name="state_ready">Listo</string>
+    <string name="state_requesting">Solicitando acceso</string>
+    <string name="state_session">Sesión activa</string>
+    <string name="state_recording">Grabando</string>
+    <string name="state_paused">En pausa</string>
+    <string name="state_stopped">Detenido</string>
+
+    <string name="hint_ready">Toca para iniciar la captura de pantalla</string>
+    <string name="hint_requesting">Acepta el permiso del sistema para continuar</string>
+    <string name="hint_session">Usa el botón o la bolita flotante para grabar</string>
+    <string name="hint_recording">Grabando en segundo plano · usa los controles para pausar o detener</string>
+    <string name="hint_paused">Grabación pausada · reanuda cuando quieras</string>
+    <string name="hint_stopped">La sesión ha finalizado</string>
+
+    <string name="action_start_session">Iniciar captura</string>
+    <string name="action_start_recording">Grabar</string>
+    <string name="action_pause">Pausar</string>
+    <string name="action_resume">Reanudar</string>
+    <string name="action_stop">Detener</string>
+    <string name="action_end_session">Cerrar sesión</string>
+
+    <string name="monitor_title">Estado del motor</string>
+    <string name="monitor_res_fps">%1$s · %2$d/%3$d FPS</string>
+    <string name="monitor_bitrate">%1$s Mbps</string>
+    <string name="monitor_audio_active">Audio: %1$s</string>
+    <string name="monitor_audio_off">Sin audio</string>
+    <string name="monitor_audio_silent">Audio sin señal</string>
+    <string name="monitor_encoder_ready">Encoder listo</string>
+    <string name="monitor_encoder_running">Codificando</string>
+    <string name="monitor_encoder_paused">En pausa</string>
+    <string name="monitor_encoder_error">Error de codificación</string>
+    <string name="current_settings">PERFIL ACTIVO</string>
+    <string name="current_settings_format">%1$s · %2$d FPS · %3$s</string>
+    <string name="preview_note">Guardado seguro en Movies/SmoothRec</string>
+
+    <string name="record_start_description">Iniciar grabación</string>
+    <string name="record_stop_description">Detener grabación</string>
+    <string name="settings_description">Ajustes</string>
+    <string name="back_description">Volver</string>
+
+    <string name="recordings_title">Grabaciones</string>
+    <string name="recordings_count">%1$d vídeos</string>
+    <string name="recordings_empty_title">Aún no hay grabaciones</string>
+    <string name="recordings_empty_hint">Tus vídeos grabados con SmoothRec aparecerán aquí automáticamente.</string>
+    <string name="recording_play">Reproducir</string>
+    <string name="recording_share">Compartir</string>
+    <string name="recording_delete">Eliminar</string>
+    <string name="recording_delete_title">¿Eliminar grabación?</string>
+    <string name="recording_delete_message">Se eliminará «%1$s» de forma permanente.</string>
+    <string name="recording_deleted">Grabación eliminada</string>
+    <string name="recording_delete_error">No se pudo eliminar el vídeo</string>
+    <string name="recording_open_error">No hay un reproductor disponible</string>
+    <string name="recording_share_chooser">Compartir vídeo</string>
+    <string name="recording_meta_format">%1$s · %2$s · %3$s</string>
+
+    <string name="settings_title">Ajustes</string>
+
+    <string name="settings_quality">1. Calidad de vídeo</string>
+    <string name="settings_bitrate">Bitrate</string>
+    <string name="quality_auto">Auto</string>
+    <string name="quality_low">4 Mbps</string>
+    <string name="quality_medium">8 Mbps</string>
+    <string name="quality_high">12 Mbps</string>
+    <string name="quality_ultra">16 Mbps</string>
+    <string name="quality_max">24 Mbps</string>
+    <string name="settings_duration_limit">Duración máxima</string>
+    <string name="duration_unlimited">Sin límite</string>
+    <string name="duration_5m">5 min</string>
+    <string name="duration_15m">15 min</string>
+    <string name="duration_30m">30 min</string>
+    <string name="duration_60m">60 min</string>
+    <string name="duration_limit_reached">Límite de duración alcanzado · vídeo guardado</string>
+
+    <string name="settings_resolution">2. Resolución</string>
+    <string name="resolution_screen">Auto</string>
+    <string name="resolution_1080p">1080p</string>
+    <string name="resolution_720p">720p</string>
+    <string name="settings_resolution_hint">Conserva la relación de aspecto real sin recortar ni estirar.</string>
+
+    <string name="settings_framerate">3. Fotogramas por segundo (FPS)</string>
+    <string name="fps_30">30 FPS</string>
+    <string name="fps_60">60 FPS</string>
+    <string name="fps_90">90 FPS</string>
+    <string name="fps_120">120 FPS</string>
+    <string name="settings_fps_hint">Solo se muestran las tasas admitidas por tu pantalla y codificador.</string>
+
+    <string name="settings_audio">4. Audio</string>
+    <string name="settings_audio_source">Fuente de audio</string>
+    <string name="audio_internal">Interno</string>
+    <string name="audio_mic">Micrófono</string>
+    <string name="audio_mixed">Interno + Mic</string>
+    <string name="settings_channels">Canales de audio</string>
+    <string name="channel_mono">Mono</string>
+    <string name="channel_stereo">Estéreo</string>
+
+    <string name="settings_watermark">5. Marca de agua</string>
+    <string name="watermark_toggle_label">Mostrar «SmoothRec» en el vídeo</string>
+    <string name="watermark_hint">Añade una marca discreta, blanca y muy transparente en una esquina fija del MP4 final.</string>
+
+    <string name="settings_appearance">Apariencia, idioma y bolita</string>
+    <string name="settings_theme">Tema</string>
+    <string name="theme_auto">Auto</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="theme_light">Claro</string>
+    <string name="settings_language">Idioma</string>
+    <string name="language_auto">Auto</string>
+    <string name="language_es">Español</string>
+    <string name="language_en">English</string>
+    <string name="language_zh">中文</string>
+    <string name="language_hi">हिन्दी</string>
+    <string name="language_ar">العربية</string>
+    <string name="settings_bubble_opacity">Transparencia de la bolita flotante (%1$d%%)</string>
+    <string name="overlay_permission">Permiso de ventana flotante</string>
+    <string name="overlay_permission_hint">Necesario para mostrar la bolita flotante sobre videojuegos y otras apps.</string>
+    <string name="overlay_permission_granted">La ventana flotante ya está activada.</string>
+
+    <string name="settings_updates">6. Buscar actualizaciones</string>
+    <string name="update_installed_version">Versión instalada: v%1$s (%2$d)</string>
+    <string name="update_check">Comprobar actualizaciones</string>
+    <string name="update_checking">Comprobando…</string>
+    <string name="update_none">No hay versiones nuevas publicadas todavía.</string>
+    <string name="update_current">Ya tienes la última versión disponible.</string>
+    <string name="update_error">No se pudo conectar para comprobar actualizaciones.</string>
+    <string name="update_found">Nueva versión %1$s disponible</string>
+    <string name="update_download_confirm_title">Actualización disponible (%1$s)</string>
+    <string name="update_download_confirm_action">Descargar e instalar</string>
+    <string name="update_title">Actualización de SmoothRec %1$s</string>
+    <string name="update_tap">Toca para descargar e instalar</string>
+    <string name="update_channel">Actualizaciones de SmoothRec</string>
+    <string name="update_downloading">Descargando actualización…</string>
+    <string name="update_allow_install">Permite instalar aplicaciones desde SmoothRec para continuar.</string>
+
+    <string name="settings_credits">7. Créditos</string>
+    <string name="about_creator">Desarrollado por Keiner</string>
+    <string name="about_subtitle">SmoothRec · Grabador de pantalla independiente</string>
+    <string name="about_tiktok">TikTok</string>
+    <string name="about_instagram">Instagram</string>
+    <string name="about_tiktok_description">Abrir perfil de TikTok</string>
+    <string name="about_instagram_description">Abrir perfil de Instagram</string>
+    <string name="about_no_browser">No hay una aplicación disponible para abrir el enlace.</string>
+
+    <string name="audio_fallback_permission">Sin permiso de micrófono: se grabará solo vídeo.</string>
+    <string name="audio_fallback_internal">Audio interno no disponible: se grabará solo vídeo.</string>
+    <string name="audio_fallback_internal_mic">Audio interno no disponible: se usa micrófono.</string>
+    <string name="audio_fallback_mic">Micrófono no disponible: se grabará solo vídeo.</string>
+    <string name="audio_fallback_mixed">No se pudieron capturar fuentes de audio: solo vídeo.</string>
+    <string name="audio_fallback_mixed_mic">Audio interno no disponible: solo micrófono.</string>
+    <string name="audio_fallback_mixed_internal">Micrófono no disponible: solo audio interno.</string>
+    <string name="audio_fallback_encoder">Error en codificador de audio: se grabará solo vídeo.</string>
+    <string name="audio_fallback_silent">La fuente de audio no entrega señal.</string>
+    <string name="audio_internal_silent">Audio interno bloqueado o en silencio por la app de origen.</string>
+    <string name="audio_permission_denied">Permiso de audio denegado.</string>
+    <string name="notification_permission_denied">Sin permiso de notificaciones; la barra flotante seguirá activa.</string>
+    <string name="audio_internal_fallback">Audio interno sin señal: se usa micrófono como respaldo.</string>
+    <string name="audio_channels_fallback">Canales ajustados automáticamente según el dispositivo.</string>
+    <string name="fallback_resolution">Ajustado a %1$d×%2$d · %3$d FPS por compatibilidad.</string>
+    <string name="fallback_framerate">Ajustado a %1$d FPS por compatibilidad.</string>
+    <string name="recording_saved">Grabación guardada en Movies/SmoothRec</string>
+    <string name="recording_error">Error al grabar: %1$s</string>
+
+    <string name="permission_rationale_title">Permisos necesarios</string>
+    <string name="permission_rationale_body">SmoothRec necesita permiso de audio para capturar el sonido y notificaciones para mantener el servicio activo en segundo plano.</string>
+    <string name="permission_rationale_continue">Continuar</string>
+    <string name="common_cancel">Cancelar</string>
+
+    <string name="notification_channel_name">Grabación de pantalla</string>
+    <string name="notification_channel_description">Notificación persistente mientras SmoothRec está activo.</string>
+    <string name="notification_title">SmoothRec</string>
+    <string name="notification_text_dynamic">Grabando · %1$d×%2$d · %3$d FPS</string>
+    <string name="notification_stop_action">Detener</string>
+    <string name="notification_pause_action">Pausar</string>
+    <string name="notification_resume_action">Reanudar</string>
+    <string name="notification_close_action">Cerrar</string>
+    <string name="notification_session_text">Sesión lista · toca la bolita para grabar</string>
+    <string name="notification_recording_time">Grabando · %1$s</string>
+    <string name="notification_paused_time">En pausa · %1$s</string>
+
+    <string name="overlay_start">Grabar</string>
+    <string name="overlay_pause">Pausar</string>
+    <string name="overlay_resume">Reanudar</string>
+    <string name="overlay_stop">Detener</string>
+    <string name="overlay_minimize">Minimizar</string>
+    <string name="overlay_close">Cerrar</string>
+    <string name="overlay_bubble_description">Controles de SmoothRec</string>
+</resources>

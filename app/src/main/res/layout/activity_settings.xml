@@ -2,26 +2,28 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
+    android:background="?attr/srBackground"
     android:orientation="vertical">
 
+    <!-- Top Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingTop="24dp"
+        android:paddingStart="10dp"
+        android:paddingTop="18dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="16dp">
+        android:paddingBottom="10dp">
 
         <ImageButton
             android:id="@+id/backButton"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/back_description"
-            android:padding="12dp"
+            android:padding="10dp"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_arrow_back" />
 
         <TextView
@@ -29,8 +31,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:text="@string/settings_title"
-            android:textColor="@color/text_primary"
-            android:textSize="20sp"
+            android:textAlignment="viewStart"
+            android:textColor="?attr/srTextPrimary"
+            android:textSize="19sp"
             android:textStyle="bold" />
 
     </LinearLayout>
@@ -40,36 +43,252 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingBottom="24dp">
+        android:paddingStart="16dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="28dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- 1. Calidad de vídeo -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="16dp"
                 android:background="@drawable/card_background"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/settings_quality"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="?attr/srAccent"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/settings_bitrate"
+                    android:textColor="?attr/srTextSecondary"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/qualityAutoButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/quality_auto"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/qualityLowButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/quality_low"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/qualityMediumButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/quality_medium"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/qualityHighButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/quality_high"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/qualityUltraButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/quality_ultra"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/qualityMaxButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/quality_max"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/settings_duration_limit"
+                    android:textColor="?attr/srTextSecondary"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/durationUnlimitedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_weight="1.2"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/duration_unlimited"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/duration5mButton"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/duration_5m"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/duration15mButton"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/duration_15m"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/duration30mButton"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/duration_30m"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/duration60mButton"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/duration_60m"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- 2. Resolución -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/card_background"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="@string/settings_resolution"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:textColor="?attr/srAccent"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -80,42 +299,468 @@
                     <Button
                         android:id="@+id/resolutionScreenButton"
                         android:layout_width="0dp"
-                        android:layout_height="44dp"
+                        android:layout_height="38dp"
                         android:layout_weight="1"
                         android:background="@drawable/chip_background"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:minWidth="0dp"
                         android:text="@string/resolution_screen"
-                        android:textColor="@color/text_primary"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
                         android:textSize="12sp" />
 
                     <Button
                         android:id="@+id/resolution1080Button"
                         android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="8dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/chip_background"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:minWidth="0dp"
                         android:text="@string/resolution_1080p"
-                        android:textColor="@color/text_primary"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
                         android:textSize="12sp" />
 
                     <Button
                         android:id="@+id/resolution720Button"
                         android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="8dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/chip_background"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:minWidth="0dp"
                         android:text="@string/resolution_720p"
-                        android:textColor="@color/text_primary"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/settings_resolution_hint"
+                    android:textColor="?attr/srIconMuted"
+                    android:textSize="11sp" />
+
+            </LinearLayout>
+
+            <!-- 3. Fotogramas por segundo (FPS) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/card_background"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_framerate"
+                    android:textColor="?attr/srAccent"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/fps30Button"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/fps_30"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/fps60Button"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/fps_60"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/fps90Button"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/fps_90"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp"
+                        android:visibility="gone" />
+
+                    <Button
+                        android:id="@+id/fps120Button"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/fps_120"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/settings_fps_hint"
+                    android:textColor="?attr/srIconMuted"
+                    android:textSize="11sp" />
+
+            </LinearLayout>
+
+            <!-- Modo de captura -->
+            <LinearLayout
+                android:id="@+id/captureModeCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/card_background"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_capture_mode"
+                    android:textColor="?attr/srAccent"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/captureSingleAppButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/capture_mode_single_app"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/captureFullScreenButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/capture_mode_full_screen"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/captureModeHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/capture_mode_hint"
+                    android:textColor="?attr/srIconMuted"
+                    android:textSize="11sp" />
+
+            </LinearLayout>
+
+            <!-- 4. Audio -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/card_background"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_audio"
+                    android:textColor="?attr/srAccent"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/settings_audio_source"
+                    android:textColor="?attr/srTextSecondary"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/audioInternalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/audio_internal"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/audioMicButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/audio_mic"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/audioMixedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/audio_mixed"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/settings_channels"
+                    android:textColor="?attr/srTextSecondary"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/channelMonoButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/channel_mono"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/channelStereoButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/channel_stereo"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- 5. Marca de agua -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/card_background"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_watermark"
+                    android:textColor="?attr/srAccent"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/watermark_toggle_label"
+                        android:textAlignment="viewStart"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="13sp" />
+
+                    <Switch
+                        android:id="@+id/watermarkSwitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/watermark_hint"
+                    android:textColor="?attr/srIconMuted"
+                    android:textSize="11sp" />
+
+            </LinearLayout>
+
+            <!-- Apariencia, idioma y bolita flotante -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/card_background"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_appearance"
+                    android:textColor="?attr/srAccent"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/settings_theme"
+                    android:textColor="?attr/srTextSecondary"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/themeAutoButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/theme_auto"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/themeDarkButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/theme_dark"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/themeLightButton"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/theme_light"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
                         android:textSize="12sp" />
 
                 </LinearLayout>
@@ -123,308 +768,311 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/settings_resolution_hint"
-                    android:textColor="@color/icon_muted"
-                    android:textSize="11sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="@string/settings_framerate"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:layout_marginTop="12dp"
+                    android:text="@string/settings_language"
+                    android:textColor="?attr/srTextSecondary"
+                    android:textSize="13sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="8dp"
                     android:orientation="horizontal">
 
                     <Button
-                        android:id="@+id/fps60Button"
+                        android:id="@+id/langAutoButton"
                         android:layout_width="0dp"
-                        android:layout_height="44dp"
+                        android:layout_height="36dp"
                         android:layout_weight="1"
                         android:background="@drawable/chip_background"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:minWidth="0dp"
-                        android:text="@string/fps_60"
-                        android:textColor="@color/text_primary"
-                        android:textSize="13sp" />
+                        android:text="@string/language_auto"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
 
                     <Button
-                        android:id="@+id/fps30Button"
+                        android:id="@+id/langEsButton"
                         android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="8dp"
+                        android:layout_height="36dp"
+                        android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/chip_background"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:minWidth="0dp"
-                        android:text="@string/fps_30"
-                        android:textColor="@color/text_primary"
-                        android:textSize="13sp" />
+                        android:text="@string/language_es"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/langEnButton"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/language_en"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/langZhButton"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/language_zh"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/langHiButton"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/language_hi"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/langArButton"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minWidth="0dp"
+                        android:text="@string/language_ar"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/srTextPrimary"
+                        android:textSize="11sp" />
 
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/appliedSummary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/settings_applied_summary"
-                    android:textColor="@color/recording_accent"
-                    android:textSize="12sp" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginTop="20dp"
-                    android:background="@color/surface_border" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="@string/settings_encoding"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/settings_encoding_value"
-                    android:textColor="@color/recording_accent"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
+                    android:id="@+id/bubbleOpacityLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
-                    android:text="@string/settings_codec"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:textColor="?attr/srTextSecondary"
+                    android:textSize="13sp" />
+
+                <SeekBar
+                    android:id="@+id/bubbleOpacitySeek"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:max="75" />
+
+                <Button
+                    android:id="@+id/overlayPermissionButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/chip_background"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="@string/overlay_permission"
+                    android:textAllCaps="false"
+                    android:textColor="?attr/srTextPrimary"
+                    android:textSize="12sp" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/settings_codec_value"
-                    android:textColor="@color/recording_accent"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="6dp"
+                    android:text="@string/overlay_permission_hint"
+                    android:textColor="?attr/srIconMuted"
+                    android:textSize="11sp" />
 
             </LinearLayout>
 
+            <!-- 6. Buscar actualizaciones -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/card_background"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/settings_audio"
-                    android:textColor="@color/text_secondary"
+                    android:text="@string/settings_updates"
+                    android:textColor="?attr/srAccent"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/installedVersionText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="?attr/srTextSecondary"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/updateCheckButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/chip_background"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="@string/update_check"
+                    android:textAllCaps="false"
+                    android:textColor="?attr/srTextPrimary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/updateStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="?attr/srTextSecondary"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/updateInstallButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/chip_background_selected"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="@string/update_download_confirm_action"
+                    android:textAllCaps="false"
+                    android:textColor="?attr/srChipSelectedText"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- 7. Créditos -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/card_background"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_credits"
+                    android:textColor="?attr/srAccent"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="@string/settings_audio_source"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:orientation="horizontal">
-
-                    <Button
-                        android:id="@+id/audioInternalButton"
-                        android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/chip_background"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:minWidth="0dp"
-                        android:text="@string/audio_internal"
-                        android:textColor="@color/text_primary"
-                        android:textSize="11sp" />
-
-                    <Button
-                        android:id="@+id/audioMicButton"
-                        android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="8dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/chip_background"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:minWidth="0dp"
-                        android:text="@string/audio_mic"
-                        android:textColor="@color/text_primary"
-                        android:textSize="11sp" />
-
-                    <Button
-                        android:id="@+id/audioMixedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="8dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/chip_background"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:minWidth="0dp"
-                        android:text="@string/audio_mixed"
-                        android:textColor="@color/text_primary"
-                        android:textSize="10sp" />
-
-                </LinearLayout>
+                    android:text="@string/app_name"
+                    android:textColor="?attr/srTextPrimary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:text="@string/settings_channels"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:layout_marginTop="4dp"
+                    android:text="@string/about_creator"
+                    android:textColor="?attr/srTextSecondary"
+                    android:textSize="12sp" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="@string/settings_channels_value"
-                    android:textColor="@color/recording_accent"
-                    android:textSize="13sp" />
-
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="24dp"
-                android:text="@string/settings_info_title"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginEnd="24dp"
-                android:gravity="center"
-                android:text="@string/settings_note"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginEnd="16dp"
-                android:background="@drawable/card_background"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/about_title"
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/about_creator"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/about_ai"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/about_tech"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginTop="20dp"
-                    android:background="@color/surface_border" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/about_social"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:text="@string/about_subtitle"
+                    android:textColor="?attr/srIconMuted"
+                    android:textSize="11sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="14dp"
                     android:orientation="horizontal">
 
-                    <ImageButton
+                    <LinearLayout
                         android:id="@+id/tiktokButton"
                         android:layout_width="0dp"
-                        android:layout_height="52dp"
+                        android:layout_height="40dp"
                         android:layout_weight="1"
                         android:background="@drawable/chip_background"
-                        android:contentDescription="@string/about_tiktok_description"
-                        android:padding="12dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/ic_tiktok" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="52dp"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
-                        android:alpha="0.5"
-                        android:background="@drawable/chip_background"
+                        android:clickable="true"
+                        android:focusable="true"
                         android:gravity="center"
                         android:orientation="horizontal"
-                        android:padding="8dp">
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp">
 
                         <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:contentDescription="@string/about_instagram"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:contentDescription="@string/about_tiktok_description"
+                            android:src="@drawable/ic_tiktok" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="@string/about_tiktok"
+                            android:textColor="?attr/srTextPrimary"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/instagramButton"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/chip_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:contentDescription="@string/about_instagram_description"
                             android:src="@drawable/ic_instagram" />
 
                         <TextView
@@ -432,21 +1080,12 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:text="@string/about_instagram"
-                            android:textColor="@color/icon_muted"
-                            android:textSize="11sp" />
+                            android:textColor="?attr/srTextPrimary"
+                            android:textSize="12sp" />
 
                     </LinearLayout>
 
                 </LinearLayout>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center"
-                    android:text="@string/about_tiktok"
-                    android:textColor="@color/recording_accent"
-                    android:textSize="12sp" />
 
             </LinearLayout>
 

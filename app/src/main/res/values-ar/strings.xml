@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SmoothRec</string>
+
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_recordings">التسجيلات</string>
+
+    <string name="state_ready">جاهز</string>
+    <string name="state_requesting">طلب الإذن</string>
+    <string name="state_session">الجلسة نشطة</string>
+    <string name="state_recording">جارٍ التسجيل</string>
+    <string name="state_paused">متوقف مؤقتًا</string>
+    <string name="state_stopped">متوقف</string>
+
+    <string name="hint_ready">اضغط لبدء التقاط الشاشة</string>
+    <string name="hint_requesting">اسمح بالتقاط الشاشة للمتابعة</string>
+    <string name="hint_session">استخدم الزر أو الفقاعة العائمة للتسجيل</string>
+    <string name="hint_recording">التسجيل في الخلفية · استخدم عناصر التحكم للإيقاف المؤقت أو الإنهاء</string>
+    <string name="hint_paused">تم إيقاف التسجيل مؤقتًا · استأنف في أي وقت</string>
+    <string name="hint_stopped">انتهت الجلسة</string>
+
+    <string name="action_start_session">بدء الالتقاط</string>
+    <string name="action_start_recording">تسجيل</string>
+    <string name="action_pause">إيقاف مؤقت</string>
+    <string name="action_resume">استئناف</string>
+    <string name="action_stop">إيقاف</string>
+    <string name="action_end_session">إنهاء الجلسة</string>
+
+    <string name="monitor_title">حالة المحرك</string>
+    <string name="monitor_res_fps">%1$s · %2$d/%3$d FPS</string>
+    <string name="monitor_bitrate">%1$s Mbps</string>
+    <string name="monitor_audio_active">الصوت: %1$s</string>
+    <string name="monitor_audio_off">بدون صوت</string>
+    <string name="monitor_audio_silent">الصوت صامت</string>
+    <string name="monitor_encoder_ready">المشفّر جاهز</string>
+    <string name="monitor_encoder_running">جارٍ التشفير</string>
+    <string name="monitor_encoder_paused">متوقف مؤقتًا</string>
+    <string name="monitor_encoder_error">خطأ في المشفّر</string>
+    <string name="current_settings">الملف النشط</string>
+    <string name="current_settings_format">%1$s · %2$d FPS · %3$s</string>
+    <string name="preview_note">حفظ آمن في Movies/SmoothRec</string>
+
+    <string name="record_start_description">بدء التسجيل</string>
+    <string name="record_stop_description">إيقاف التسجيل</string>
+    <string name="settings_description">الإعدادات</string>
+    <string name="back_description">رجوع</string>
+
+    <string name="recordings_title">التسجيلات</string>
+    <string name="recordings_count">%1$d فيديو</string>
+    <string name="recordings_empty_title">لا توجد تسجيلات بعد</string>
+    <string name="recordings_empty_hint">ستظهر مقاطع الفيديو المسجلة عبر SmoothRec هنا تلقائيًا.</string>
+    <string name="recording_play">تشغيل</string>
+    <string name="recording_share">مشاركة</string>
+    <string name="recording_delete">حذف</string>
+    <string name="recording_delete_title">حذف التسجيل؟</string>
+    <string name="recording_delete_message">سيتم حذف «%1$s» نهائيًا.</string>
+    <string name="recording_deleted">تم حذف التسجيل</string>
+    <string name="recording_delete_error">تعذر حذف الفيديو</string>
+    <string name="recording_open_error">لا يتوفر مشغل فيديو</string>
+    <string name="recording_share_chooser">مشاركة الفيديو</string>
+    <string name="recording_meta_format">%1$s · %2$s · %3$s</string>
+
+    <string name="settings_title">الإعدادات</string>
+
+    <string name="settings_quality">1. جودة الفيديو</string>
+    <string name="settings_bitrate">معدل البت</string>
+    <string name="quality_auto">تلقائي</string>
+    <string name="quality_low">4 Mbps</string>
+    <string name="quality_medium">8 Mbps</string>
+    <string name="quality_high">12 Mbps</string>
+    <string name="quality_ultra">16 Mbps</string>
+    <string name="quality_max">24 Mbps</string>
+    <string name="settings_duration_limit">الحد الأقصى للمدة</string>
+    <string name="duration_unlimited">بلا حدود</string>
+    <string name="duration_5m">5 دقائق</string>
+    <string name="duration_15m">15 دقيقة</string>
+    <string name="duration_30m">30 دقيقة</string>
+    <string name="duration_60m">60 دقيقة</string>
+    <string name="duration_limit_reached">تم بلوغ الحد الأقصى للمدة · تم حفظ الفيديو</string>
+
+    <string name="settings_resolution">2. الدقة</string>
+    <string name="resolution_screen">تلقائي</string>
+    <string name="resolution_1080p">1080p</string>
+    <string name="resolution_720p">720p</string>
+    <string name="settings_resolution_hint">يحافظ على نسبة أبعاد الشاشة الحقيقية دون قص أو تمديد.</string>
+
+    <string name="settings_framerate">3. الإطارات في الثانية (FPS)</string>
+    <string name="fps_30">30 FPS</string>
+    <string name="fps_60">60 FPS</string>
+    <string name="fps_90">90 FPS</string>
+    <string name="fps_120">120 FPS</string>
+    <string name="settings_fps_hint">تظهر فقط المعدلات المدعومة من شاشتك ومشفّر الجهاز.</string>
+
+    <string name="settings_audio">4. الصوت</string>
+    <string name="settings_audio_source">مصدر الصوت</string>
+    <string name="audio_internal">داخلي</string>
+    <string name="audio_mic">الميكروفون</string>
+    <string name="audio_mixed">داخلي + مايك</string>
+    <string name="settings_channels">قنوات الصوت</string>
+    <string name="channel_mono">أحادي</string>
+    <string name="channel_stereo">ستيريو</string>
+
+    <string name="settings_watermark">5. العلامة المائية</string>
+    <string name="watermark_toggle_label">إظهار «SmoothRec» في الفيديو</string>
+    <string name="watermark_hint">يضيف علامة بيضاء أنيقة وشفافة للغاية في زاوية ثابتة من ملف MP4 النهائي.</string>
+
+    <string name="settings_appearance">المظهر واللغة والفقاعة</string>
+    <string name="settings_theme">السمة</string>
+    <string name="theme_auto">تلقائي</string>
+    <string name="theme_dark">داكن</string>
+    <string name="theme_light">فاتح</string>
+    <string name="settings_language">اللغة</string>
+    <string name="language_auto">تلقائي</string>
+    <string name="language_es">Español</string>
+    <string name="language_en">English</string>
+    <string name="language_zh">中文</string>
+    <string name="language_hi">हिन्दी</string>
+    <string name="language_ar">العربية</string>
+    <string name="settings_bubble_opacity">شفافية الفقاعة العائمة (%1$d%%)</string>
+    <string name="overlay_permission">إذن النافذة العائمة</string>
+    <string name="overlay_permission_hint">مطلوب لإظهار الفقاعة العائمة فوق الألعاب والتطبيقات الأخرى.</string>
+    <string name="overlay_permission_granted">إذن النافذة العائمة مفعّل بالفعل.</string>
+
+    <string name="settings_updates">6. التحقق من التحديثات</string>
+    <string name="update_installed_version">الإصدار المثبت: v%1$s (%2$d)</string>
+    <string name="update_check">التحقق من التحديثات</string>
+    <string name="update_checking">جارٍ التحقق…</string>
+    <string name="update_none">لا توجد إصدارات جديدة منشورة بعد.</string>
+    <string name="update_current">لديك أحدث إصدار متاح.</string>
+    <string name="update_error">تعذر الاتصال للتحقق من التحديثات.</string>
+    <string name="update_found">يتوفر إصدار جديد %1$s</string>
+    <string name="update_download_confirm_title">يتوفر تحديث (%1$s)</string>
+    <string name="update_download_confirm_action">تنزيل وتثبيت</string>
+    <string name="update_title">تحديث SmoothRec %1$s</string>
+    <string name="update_tap">اضغط للتنزيل والتثبيت</string>
+    <string name="update_channel">تحديثات SmoothRec</string>
+    <string name="update_downloading">جارٍ تنزيل التحديث…</string>
+    <string name="update_allow_install">اسمح بتثبيت التطبيقات من SmoothRec للمتابعة.</string>
+
+    <string name="settings_credits">7. الحقوق</string>
+    <string name="about_creator">تطوير Keiner</string>
+    <string name="about_subtitle">SmoothRec · مسجّل شاشة مستقل</string>
+    <string name="about_tiktok">TikTok</string>
+    <string name="about_instagram">Instagram</string>
+    <string name="about_tiktok_description">فتح حساب TikTok</string>
+    <string name="about_instagram_description">فتح حساب Instagram</string>
+    <string name="about_no_browser">لا يوجد تطبيق متاح لفتح الرابط.</string>
+
+    <string name="audio_fallback_permission">إذن الميكروفون مفقود: سيتم تسجيل الفيديو فقط.</string>
+    <string name="audio_fallback_internal">الصوت الداخلي غير متاح: سيتم تسجيل الفيديو فقط.</string>
+    <string name="audio_fallback_internal_mic">الصوت الداخلي غير متاح: يتم استخدام الميكروفون.</string>
+    <string name="audio_fallback_mic">الميكروفون غير متاح: سيتم تسجيل الفيديو فقط.</string>
+    <string name="audio_fallback_mixed">تعذر التقاط مصادر الصوت: فيديو فقط.</string>
+    <string name="audio_fallback_mixed_mic">الصوت الداخلي غير متاح: الميكروفون فقط.</string>
+    <string name="audio_fallback_mixed_internal">الميكروفون غير متاح: الصوت الداخلي فقط.</string>
+    <string name="audio_fallback_encoder">فشل مشفّر الصوت: سيتم تسجيل الفيديو فقط.</string>
+    <string name="audio_fallback_silent">مصدر الصوت المحدد صامت.</string>
+    <string name="audio_internal_silent">الصوت الداخلي محظور أو صامت من التطبيق المصدر.</string>
+    <string name="audio_permission_denied">تم رفض إذن الصوت.</string>
+    <string name="notification_permission_denied">تم رفض إذن الإشعارات؛ ستبقى الفقاعة العائمة نشطة.</string>
+    <string name="audio_internal_fallback">الصوت الداخلي صامت: يتم التبديل إلى الميكروفون.</string>
+    <string name="audio_channels_fallback">تم ضبط قنوات الصوت تلقائيًا حسب الجهاز.</string>
+    <string name="fallback_resolution">تم الضبط إلى %1$d×%2$d · %3$d FPS للتوافق.</string>
+    <string name="fallback_framerate">تم الضبط إلى %1$d FPS للتوافق.</string>
+    <string name="recording_saved">تم حفظ التسجيل في Movies/SmoothRec</string>
+    <string name="recording_error">خطأ في التسجيل: %1$s</string>
+
+    <string name="permission_rationale_title">الأذونات المطلوبة</string>
+    <string name="permission_rationale_body">يحتاج SmoothRec إلى إذن الصوت لالتقاط الصوت وإذن الإشعارات لإبقاء خدمة التسجيل نشطة في الخلفية.</string>
+    <string name="permission_rationale_continue">متابعة</string>
+    <string name="common_cancel">إلغاء</string>
+
+    <string name="notification_channel_name">تسجيل الشاشة</string>
+    <string name="notification_channel_description">إشعار مستمر أثناء نشاط SmoothRec.</string>
+    <string name="notification_title">SmoothRec</string>
+    <string name="notification_text_dynamic">تسجيل · %1$d×%2$d · %3$d FPS</string>
+    <string name="notification_stop_action">إيقاف</string>
+    <string name="notification_pause_action">إيقاف مؤقت</string>
+    <string name="notification_resume_action">استئناف</string>
+    <string name="notification_close_action">إغلاق</string>
+    <string name="notification_session_text">الجلسة جاهزة · اضغط الفقاعة للتسجيل</string>
+    <string name="notification_recording_time">جارٍ التسجيل · %1$s</string>
+    <string name="notification_paused_time">متوقف مؤقتًا · %1$s</string>
+
+    <string name="overlay_start">تسجيل</string>
+    <string name="overlay_pause">إيقاف مؤقت</string>
+    <string name="overlay_resume">استئناف</string>
+    <string name="overlay_stop">إيقاف</string>
+    <string name="overlay_minimize">تصغير</string>
+    <string name="overlay_close">إغلاق</string>
+    <string name="overlay_bubble_description">عناصر تحكم SmoothRec</string>
+</resources>

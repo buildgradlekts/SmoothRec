@@ -2,10 +2,10 @@ package com.smoothrec.app.encoder
 
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.os.Build
 
 /**
- * Configuración del codificador.
- * Preset validado en el dispositivo: c2.qti.avc.encoder, 1920x1080, 60 FPS, High@L5.
+ * Configuración del codificador de vídeo H.264.
  */
 data class EncoderConfig(
     val width: Int = 1920,
@@ -17,7 +17,10 @@ data class EncoderConfig(
     val profile: Int = MediaCodecInfo.CodecProfileLevel.AVCProfileHigh,
     val level: Int = MediaCodecInfo.CodecProfileLevel.AVCLevel5,
 ) {
-    fun toMediaFormat(): MediaFormat = MediaFormat.createVideoFormat(mimeType, width, height).apply {
+    fun toMediaFormat(
+        includeProfileLevel: Boolean = true,
+        includeRealtimeHints: Boolean = true,
+    ): MediaFormat = MediaFormat.createVideoFormat(mimeType, width, height).apply {
         setInteger(
             MediaFormat.KEY_COLOR_FORMAT,
             MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
@@ -25,8 +28,21 @@ data class EncoderConfig(
         setInteger(MediaFormat.KEY_BIT_RATE, bitRate)
         setInteger(MediaFormat.KEY_FRAME_RATE, frameRate)
         setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, iFrameIntervalSeconds)
-        setInteger(MediaFormat.KEY_PROFILE, profile)
-        setInteger(MediaFormat.KEY_LEVEL, level)
+        if (includeProfileLevel) {
+            setInteger(MediaFormat.KEY_PROFILE, profile)
+            setInteger(MediaFormat.KEY_LEVEL, level)
+        }
+        if (includeRealtimeHints) {
+            setInteger(
+                MediaFormat.KEY_BITRATE_MODE,
+                MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR,
+            )
+            // Prioridad 0 = tiempo real para reducir pérdida de frames en videojuegos.
+            setInteger(MediaFormat.KEY_PRIORITY, 0)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                setInteger(MediaFormat.KEY_OPERATING_RATE, frameRate)
+            }
+        }
     }
 
     companion object {

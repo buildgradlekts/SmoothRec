@@ -13,8 +13,8 @@ android {
         applicationId = "com.smoothrec.app"
         minSdk = 23
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 6
+        versionName = "0.4.0"
     }
 
     buildTypes {

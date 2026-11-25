@@ -38,8 +38,11 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
     private var firstRawPts = -1L
     private var lastRawPts = -1L
 
-    // Medición ligera de FPS efectivos en ventana de ~1 s (sin asignaciones).
-    private var fpsWindowStartNs = 0L
+    // FPS efectivos calculados con los PTS reales de los frames codificados.
+    // Se mantiene una ventana corta para que el indicador responda rápido sin
+    // asignaciones ni trabajo extra en el hilo de audio o en el muxer.
+    private var fpsWindowStartPtsUs = -1L
+    private var fpsWindowLastPtsUs = -1L
     private var fpsWindowFrames = 0
     @Volatile private var measuredFps = 0
 
@@ -78,7 +81,7 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
                         info.presentationTimeUs = (info.presentationTimeUs - offset).coerceAtLeast(0L)
                     }
 
-                    updateEffectiveFps()
+                    updateEffectiveFps(info.presentationTimeUs)
 
                     buffer.position(info.offset)
                     buffer.limit(info.offset + info.size)
@@ -153,19 +156,28 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
         throw lastError ?: IllegalStateException("No se pudo configurar $codecName")
     }
 
-    private fun updateEffectiveFps() {
-        val now = System.nanoTime()
-        if (fpsWindowStartNs == 0L) {
-            fpsWindowStartNs = now
+    /**
+     * Calcula los FPS reales a partir de los presentationTimeUs de los buffers
+     * de vídeo que el codec entrega, no del reloj de pared ni de la configuración.
+     * Cada ~500 ms de tiempo de vídeo publica una medición nueva.
+     */
+    private fun updateEffectiveFps(ptsUs: Long) {
+        if (fpsWindowStartPtsUs < 0L) {
+            fpsWindowStartPtsUs = ptsUs
+            fpsWindowLastPtsUs = ptsUs
             fpsWindowFrames = 1
             return
         }
+        if (ptsUs <= fpsWindowLastPtsUs) return
+
         fpsWindowFrames++
-        val elapsedNs = now - fpsWindowStartNs
-        if (elapsedNs >= 1_000_000_000L) {
-            measuredFps = ((fpsWindowFrames * 1_000_000_000.0) / elapsedNs).roundToInt()
-            fpsWindowStartNs = now
-            fpsWindowFrames = 0
+        fpsWindowLastPtsUs = ptsUs
+        val elapsedUs = ptsUs - fpsWindowStartPtsUs
+        if (elapsedUs >= 500_000L) {
+            measuredFps = ((fpsWindowFrames - 1) * 1_000_000.0 / elapsedUs).roundToInt()
+            fpsWindowStartPtsUs = ptsUs
+            fpsWindowLastPtsUs = ptsUs
+            fpsWindowFrames = 1
         }
     }
 
@@ -176,7 +188,8 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
         this.paused = paused
         if (paused) {
             measuredFps = 0
-            fpsWindowStartNs = 0L
+            fpsWindowStartPtsUs = -1L
+            fpsWindowLastPtsUs = -1L
             fpsWindowFrames = 0
         }
     }

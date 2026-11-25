@@ -223,4 +223,7 @@
     <string name="capture_mode_not_supported">Una app requiere Android 14 o superior.</string>
     <string name="session_not_active">Sesión no activa. Abre SmoothRec y toca Grabar para autorizar la captura.</string>
     <string name="overlay_hidden_during_recording">Barra oculta al grabar. Usa la notificación para pausar o detener.</string>
+    <string name="fps_overlay_value">%1$d FPS</string>
+    <string name="fps_overlay_waiting">-- FPS</string>
+    <string name="fps_overlay_paused">PAUSA</string>
 </resources>

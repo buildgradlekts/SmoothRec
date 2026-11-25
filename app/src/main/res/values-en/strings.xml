@@ -189,4 +189,7 @@
     <string name="overlay_minimize">Minimize</string>
     <string name="overlay_close">Close</string>
     <string name="overlay_bubble_description">SmoothRec controls</string>
+    <string name="fps_overlay_value">%1$d FPS</string>
+    <string name="fps_overlay_waiting">-- FPS</string>
+    <string name="fps_overlay_paused">PAUSED</string>
 </resources>

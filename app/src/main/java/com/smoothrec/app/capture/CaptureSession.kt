@@ -228,6 +228,9 @@ class CaptureSession(
 
     fun isPaused(): Boolean = paused
 
+    /** FPS efectivos medidos por el encoder a partir de los PTS de vídeo. */
+    fun effectiveVideoFps(): Int = encoder?.effectiveFps() ?: 0
+
     fun snapshotTelemetry(elapsedActiveMs: Long): RecordingTelemetry {
         val cfg = appliedResolution?.config
         val enc = encoder

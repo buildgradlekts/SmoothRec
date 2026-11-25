@@ -18,6 +18,7 @@ import android.util.Log
 import com.smoothrec.app.R
 import com.smoothrec.app.audio.CaptureDiagnostics
 import com.smoothrec.app.overlay.FloatingBarController
+import com.smoothrec.app.overlay.FpsOverlayController
 import com.smoothrec.app.recording.AudioSourceOption
 import com.smoothrec.app.recording.RecordingPreferences
 import com.smoothrec.app.ui.LocaleHelper
@@ -57,6 +58,16 @@ class ScreenCaptureService : Service() {
     }
     private var wakeLock: PowerManager.WakeLock? = null
     private var overlay: FloatingBarController? = null
+    private var fpsOverlay: FpsOverlayController? = null
+
+    /** Lee los FPS efectivos del encoder y refresca el indicador cada 500 ms. */
+    private val fpsTick = object : Runnable {
+        override fun run() {
+            val current = session ?: return
+            fpsOverlay?.update(current.effectiveVideoFps(), isPaused)
+            mainHandler.postDelayed(this, 500L)
+        }
+    }
 
     private var segmentStartedElapsed = 0L
     private var accumulatedActiveMs = 0L
@@ -219,6 +230,9 @@ class ScreenCaptureService : Service() {
         notifyConfigApplied(localizedString(R.string.overlay_hidden_during_recording))
         mainHandler.removeCallbacks(timerRunnable)
         mainHandler.post(timerRunnable)
+        showFpsOverlay()
+        mainHandler.removeCallbacks(fpsTick)
+        mainHandler.post(fpsTick)
 
         // Actualiza tipo FGS si cambió la fuente de audio entre grabaciones.
         promoteToForeground()
@@ -239,7 +253,9 @@ class ScreenCaptureService : Service() {
                 mainHandler.post {
                     timerActive = false
                     mainHandler.removeCallbacks(timerRunnable)
+                    mainHandler.removeCallbacks(fpsTick)
                     overlay?.onRecordingStopped()
+                    hideFpsOverlay()
                 }
                 return@execute
             }
@@ -251,7 +267,9 @@ class ScreenCaptureService : Service() {
                     mainHandler.post {
                         timerActive = false
                         mainHandler.removeCallbacks(timerRunnable)
+                        mainHandler.removeCallbacks(fpsTick)
                         overlay?.onRecordingStopped()
+                        hideFpsOverlay()
                     }
                     return@execute
                 }
@@ -278,7 +296,9 @@ class ScreenCaptureService : Service() {
                     if (session === newSession) session = null
                     timerActive = false
                     mainHandler.removeCallbacks(timerRunnable)
+                    mainHandler.removeCallbacks(fpsTick)
                     overlay?.onRecordingStopped()
+                    hideFpsOverlay()
                     CaptureNotification.update(
                         this,
                         localizedString(R.string.notification_session_text),
@@ -341,7 +361,9 @@ class ScreenCaptureService : Service() {
         timerActive = false
         isPaused = false
         mainHandler.removeCallbacks(timerRunnable)
+        mainHandler.removeCallbacks(fpsTick)
         overlay?.onRecordingStopped()
+        hideFpsOverlay()
         lifecycle.execute {
             val current = session
             current?.release()
@@ -388,8 +410,10 @@ class ScreenCaptureService : Service() {
         timerActive = false
         isPaused = false
         mainHandler.removeCallbacks(timerRunnable)
+        mainHandler.removeCallbacks(fpsTick)
         overlay?.hide()
         overlay = null
+        hideFpsOverlay()
         val activeProjection = projection
         projection = null
         if (activeProjection != null) {
@@ -420,6 +444,19 @@ class ScreenCaptureService : Service() {
         } else {
             CaptureDiagnostics.log("SERVICIO: falta permiso de superposición")
         }
+    }
+
+    private fun showFpsOverlay() {
+        if (fpsOverlay != null) return
+        val controller = FpsOverlayController(applicationContext)
+        if (controller.show()) {
+            fpsOverlay = controller
+        }
+    }
+
+    private fun hideFpsOverlay() {
+        fpsOverlay?.hide()
+        fpsOverlay = null
     }
 
     private fun promoteToForeground() {
@@ -501,12 +538,14 @@ class ScreenCaptureService : Service() {
         endRequested = true
         timerActive = false
         mainHandler.removeCallbacks(timerRunnable)
+        mainHandler.removeCallbacks(fpsTick)
         val currentSession = session
         val currentProjection = projection
         session = null
         projection = null
         overlay?.hide()
         overlay = null
+        hideFpsOverlay()
         releaseWakeLock()
         lifecycle.execute {
             currentSession?.release()

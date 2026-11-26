@@ -237,4 +237,16 @@
     <string name="update_retry_in">可恢复错误。正在重试（%1$d / %2$d）…</string>
     <string name="update_cancelled">下载已取消。</string>
     <string name="update_open_settings">打开设置</string>
+    <string name="update_sheet_title">有可用更新</string>
+    <string name="update_sheet_downloading">正在下载更新</string>
+    <string name="update_sheet_later">稍后</string>
+    <string name="update_sheet_update">更新</string>
+    <string name="update_sheet_skip">不再询问</string>
+    <string name="update_sheet_progress">%1$s / %2$s</string>
+    <string name="update_perm_title">允许 %1$s 安装更新</string>
+    <string name="update_perm_body">Android 只会询问一次。在下一屏幕为此应用开启权限后返回：更新会立即安装。</string>
+    <string name="update_perm_not_now">暂不</string>
+    <string name="update_perm_open">打开设置</string>
+    <string name="update_ready_title">更新已就绪，可安装</string>
+    <string name="update_install">安装</string>
 </resources>

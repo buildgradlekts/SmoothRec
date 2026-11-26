@@ -237,4 +237,16 @@
     <string name="update_retry_in">Error recuperable. Reintentando (%1$d de %2$d)…</string>
     <string name="update_cancelled">Descarga cancelada.</string>
     <string name="update_open_settings">Abrir ajustes</string>
+    <string name="update_sheet_title">Actualización disponible</string>
+    <string name="update_sheet_downloading">Descargando la actualización</string>
+    <string name="update_sheet_later">Más tarde</string>
+    <string name="update_sheet_update">Actualizar</string>
+    <string name="update_sheet_skip">No volver a preguntar</string>
+    <string name="update_sheet_progress">%1$s de %2$s</string>
+    <string name="update_perm_title">Permite que %1$s instale actualizaciones</string>
+    <string name="update_perm_body">Android lo pregunta una sola vez. En la siguiente pantalla, activa el permiso para esta app y vuelve: la actualización se instala al momento.</string>
+    <string name="update_perm_not_now">Ahora no</string>
+    <string name="update_perm_open">Abrir ajustes</string>
+    <string name="update_ready_title">Actualización lista para instalar</string>
+    <string name="update_install">Instalar</string>
 </resources>

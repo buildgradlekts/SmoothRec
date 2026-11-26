@@ -237,4 +237,16 @@
     <string name="update_retry_in">Recoverable error. Retrying (%1$d of %2$d)…</string>
     <string name="update_cancelled">Download cancelled.</string>
     <string name="update_open_settings">Open settings</string>
+    <string name="update_sheet_title">Update available</string>
+    <string name="update_sheet_downloading">Downloading the update</string>
+    <string name="update_sheet_later">Later</string>
+    <string name="update_sheet_update">Update</string>
+    <string name="update_sheet_skip">Don\'t ask again</string>
+    <string name="update_sheet_progress">%1$s of %2$s</string>
+    <string name="update_perm_title">Allow %1$s to install updates</string>
+    <string name="update_perm_body">Android asks only once. On the next screen, enable the permission for this app and come back: the update installs right away.</string>
+    <string name="update_perm_not_now">Not now</string>
+    <string name="update_perm_open">Open settings</string>
+    <string name="update_ready_title">Update ready to install</string>
+    <string name="update_install">Install</string>
 </resources>

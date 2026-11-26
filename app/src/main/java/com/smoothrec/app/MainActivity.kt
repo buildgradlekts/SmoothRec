@@ -42,6 +42,7 @@ import com.smoothrec.app.setup.SetupHost
 import com.smoothrec.app.ui.LocaleHelper
 import com.smoothrec.app.ui.ThemeHelper
 import com.smoothrec.app.updater.UpdateManager
+import com.smoothrec.app.updater.UpdatePromptDialog
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
@@ -151,9 +152,33 @@ class MainActivity : Activity(), SetupHost {
             runCatching { Tab.valueOf(saved) }.getOrNull()
         }?.let { activeTab = it }
 
-        UpdateManager.checkIfNeeded(this)
         applyState(uiState)
         selectTab(activeTab, animate = false)
+        showUpdatePromptIfNeeded()
+    }
+
+    private var updateDialog: UpdatePromptDialog? = null
+
+    private fun showUpdatePromptIfNeeded() {
+        if (uiState == UiState.RECORDING || uiState == UiState.PAUSED) return
+        UpdateManager.checkForPrompt(this) { info ->
+            if (!isFinishing && !isDestroyed) {
+                updateDialog = UpdatePromptDialog(this, info).also { it.show() }
+            }
+        }
+    }
+
+    private fun refreshUpdateReadyRow() {
+        val row = findViewById<View>(R.id.updateReadyRow)
+        val ready = UpdateManager.readyUpdate(this)
+        if (ready == null) { row.visibility = View.GONE; return }
+        findViewById<TextView>(R.id.updateReadyVersion).text =
+            "${getString(R.string.app_name)} ${ready.versionName}"
+        row.visibility = View.VISIBLE
+        row.setOnClickListener {
+            if (updateDialog?.isShowing() == true) return@setOnClickListener
+            updateDialog = UpdatePromptDialog(this, ready, startReady = true).also { it.show() }
+        }
     }
 
     private fun bindViews() {
@@ -241,6 +266,8 @@ class MainActivity : Activity(), SetupHost {
         if (activeTab == Tab.RECORDINGS) {
             loadRecordings()
         }
+        updateDialog?.onHostResumed()
+        refreshUpdateReadyRow()
         SetupAssistant.maybeShow(
             this,
             allowed = uiState != UiState.RECORDING && uiState != UiState.PAUSED,
@@ -255,6 +282,7 @@ class MainActivity : Activity(), SetupHost {
     }
 
     override fun onDestroy() {
+        updateDialog?.dismissQuietly()
         SetupAssistant.onActivityDestroyed(this)
         ioExecutor.shutdownNow()
         thumbExecutor.shutdownNow()

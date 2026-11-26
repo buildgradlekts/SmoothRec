@@ -70,9 +70,11 @@ object UpdateManager {
     private const val PREFS = "smoothrec_updates"
     private const val PREF_RELEASES_URL = "releases_url"
     private const val PREF_LAST_CHECK = "last_update_check_ms"
+    private const val PREF_SKIPPED = "skipped_version"
     internal const val CHANNEL_ID = "smoothrec_updates"
     private const val CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000L
     private const val RETRY_AFTER_ERROR_MS = 15 * 60 * 1000L
+    @Volatile private var promptShown = false
 
     private val executor = Executors.newSingleThreadExecutor { r ->
         Thread(r, "SmoothRecUpdate").apply { isDaemon = true }
@@ -105,6 +107,51 @@ object UpdateManager {
             .putString(PREF_RELEASES_URL, clean)
             .apply()
         return true
+    }
+
+    /** Guarda la versión que el usuario eligió omitir en el aviso de actualización. */
+    fun skipVersion(context: Context, versionName: String) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putString(PREF_SKIPPED, versionName).apply()
+    }
+
+    /** Consulta al abrir la app (sin el límite de 6 h) y avisa si hay que mostrar la ventana. */
+    fun checkForPrompt(context: Context, onAvailable: (UpdateInfo) -> Unit) {
+        if (promptShown) return
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        checkDetailed(context) { result ->
+            if (result is CheckResult.Available && !promptShown &&
+                prefs.getString(PREF_SKIPPED, null) != result.info.versionName
+            ) {
+                promptShown = true
+                onAvailable(result.info)
+            }
+        }
+    }
+
+    /** APK ya descargado y más nuevo que el instalado (para la fila de Inicio). */
+    fun readyUpdate(context: Context): UpdateInfo? {
+        val meta = UpdateFileProvider.readMeta(context) ?: return null
+        if (meta.state != UpdateFileProvider.STATE_FINAL) return null
+        val file = UpdateFileProvider.fileFor(context)
+        if (!file.exists() || meta.size != file.length()) return null
+        val pkg = packageInfo(context, file.absolutePath) ?: return null
+        if (pkg.packageName != context.packageName) return null
+        val code = versionCodeOf(pkg)
+        if (code <= installedVersion(context).second) {
+            // Ya instalada: limpia el caché.
+            file.delete(); UpdateFileProvider.deleteMeta(context)
+            return null
+        }
+        return UpdateInfo(
+            versionCode = code,
+            versionName = pkg.versionName ?: "-",
+            apkUrl = meta.url,
+            notes = "",
+            sha256 = meta.sha256,
+            assetSize = meta.size,
+            hasExplicitCode = true,
+        )
     }
 
     fun checkIfNeeded(context: Context) {

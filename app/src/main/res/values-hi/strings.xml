@@ -237,4 +237,16 @@
     <string name="update_retry_in">ठीक होने योग्य त्रुटि। फिर प्रयास (%1$d में से %2$d)…</string>
     <string name="update_cancelled">डाउनलोड रद्द किया गया।</string>
     <string name="update_open_settings">सेटिंग्स खोलें</string>
+    <string name="update_sheet_title">अपडेट उपलब्ध है</string>
+    <string name="update_sheet_downloading">अपडेट डाउनलोड हो रहा है</string>
+    <string name="update_sheet_later">बाद में</string>
+    <string name="update_sheet_update">अपडेट करें</string>
+    <string name="update_sheet_skip">फिर न पूछें</string>
+    <string name="update_sheet_progress">%1$s में से %2$s</string>
+    <string name="update_perm_title">%1$s को अपडेट इंस्टॉल करने दें</string>
+    <string name="update_perm_body">Android केवल एक बार पूछता है। अगली स्क्रीन पर इस ऐप के लिए अनुमति चालू करें और वापस आएँ: अपडेट तुरंत इंस्टॉल हो जाएगा।</string>
+    <string name="update_perm_not_now">अभी नहीं</string>
+    <string name="update_perm_open">सेटिंग्स खोलें</string>
+    <string name="update_ready_title">अपडेट इंस्टॉल के लिए तैयार है</string>
+    <string name="update_install">इंस्टॉल करें</string>
 </resources>

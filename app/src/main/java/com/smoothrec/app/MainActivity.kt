@@ -18,6 +18,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.text.format.DateFormat
+import android.util.LongSparseArray
 import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.View
@@ -28,6 +29,7 @@ import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
+import com.smoothrec.app.audio.CaptureDiagnostics
 import com.smoothrec.app.capture.CaptureNotification
 import com.smoothrec.app.capture.RecordingStore
 import com.smoothrec.app.capture.RecordingTelemetry
@@ -728,8 +730,17 @@ class MainActivity : Activity(), SetupHost {
 
     private inner class RecordingsAdapter : BaseAdapter() {
         private val items = ArrayList<RecordingStore.RecordingItem>()
+        private val pendingThumbs = LongSparseArray<Boolean>()
+        private var thumbRequests = 0
+        private var thumbDuplicates = 0
 
         fun submit(newItems: List<RecordingStore.RecordingItem>) {
+            CaptureDiagnostics.log(
+                "UI: miniaturas del lote anterior peticiones=$thumbRequests " +
+                    "duplicadasEvitadas=$thumbDuplicates",
+            )
+            thumbRequests = 0
+            thumbDuplicates = 0
             items.clear()
             items.addAll(newItems)
             notifyDataSetChanged()
@@ -785,13 +796,25 @@ class MainActivity : Activity(), SetupHost {
                 holder.thumb.setImageBitmap(cached)
             } else {
                 holder.thumb.setImageDrawable(null)
-                thumbExecutor.execute {
-                    val bmp = RecordingStore.loadThumbnail(applicationContext, item)
-                    if (bmp != null) {
-                        thumbCache.put(item.id, bmp)
-                        holder.thumb.post {
-                            if (holder.boundId == item.id) {
-                                holder.thumb.setImageBitmap(bmp)
+                if (pendingThumbs.indexOfKey(item.id) >= 0) {
+                    // Fling: la misma fila se ha enlazado varias veces antes de que
+                    // terminara la decodificación. No encolamos otra lectura.
+                    thumbDuplicates++
+                } else {
+                    pendingThumbs.put(item.id, true)
+                    thumbRequests++
+                    thumbExecutor.execute {
+                        val bmp = RecordingStore.loadThumbnail(applicationContext, item)
+                        this@MainActivity.runOnUiThread {
+                            pendingThumbs.remove(item.id)
+                            if (isDestroyed || isFinishing || bmp == null) return@runOnUiThread
+                            thumbCache.put(item.id, bmp)
+                            // Puede haber varias filas visibles con el mismo id;
+                            // actualizamos todas las que siguen enlazadas a él.
+                            for (i in 0 until recordingsList.childCount) {
+                                val row = recordingsList.getChildAt(i)
+                                val current = row.tag as? Holder ?: continue
+                                if (current.boundId == item.id) current.thumb.setImageBitmap(bmp)
                             }
                         }
                     }

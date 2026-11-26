@@ -26,7 +26,7 @@ import com.smoothrec.app.recording.RecordingSettings
 class CaptureSession(
     private val context: Context,
     private val projection: MediaProjection,
-    private val onProjectionStopped: () -> Unit,
+    private val host: ProjectionHost,
     private val onNotice: (Int) -> Unit = {},
 ) {
     private val store = RecordingStore(context)
@@ -36,7 +36,6 @@ class CaptureSession(
     private var muxer: Mp4Muxer? = null
     private var encoder: VideoEncoder? = null
     private var watermarkRenderer: GlWatermarkRenderer? = null
-    private var capturer: ScreenCapturer? = null
     private var audioPlan: AudioPlan? = null
     private var audioEncoder: AacAudioEncoder? = null
     private var settingsUsed: RecordingSettings = RecordingPreferences.load(context)
@@ -51,17 +50,6 @@ class CaptureSession(
 
     var savedOk: Boolean = false
         private set
-
-    private val callback = object : MediaProjection.Callback() {
-        override fun onStop() {
-            Log.d(TAG, "Consentimiento retirado por el usuario")
-            onProjectionStopped()
-        }
-    }
-
-    init {
-        projection.registerCallback(callback, null)
-    }
 
     @Synchronized
     fun start() {
@@ -148,13 +136,7 @@ class CaptureSession(
                 newEncoder.inputSurface()
             }
 
-            capturer = ScreenCapturer(
-                context,
-                projection,
-                captureSurface,
-                config.width,
-                config.height,
-            ).also { it.start() }
+            host.attach(config.width, config.height, captureSurface)
 
             if (plan != null && audioEncoder != null) {
                 val sourceStart = plan.startSources()
@@ -195,7 +177,7 @@ class CaptureSession(
         if (renderer != null) {
             renderer.setPaused(true)
         } else {
-            capturer?.setSurface(null)
+            host.setSurface(null)
         }
         CaptureDiagnostics.log("Sesión: grabación EN PAUSA")
     }
@@ -219,7 +201,7 @@ class CaptureSession(
         if (renderer != null) {
             renderer.setPaused(false)
         } else if (enc != null) {
-            capturer?.setSurface(enc.inputSurface())
+            host.setSurface(enc.inputSurface())
         }
 
         audioEncoder?.resumeAfterPause(totalPausedNs)
@@ -300,8 +282,8 @@ class CaptureSession(
         paused = false
         logPerformanceSummary()
 
-        capturer?.release()
-        capturer = null
+        // Suelta la Surface antes de liberar renderer y encoder.
+        host.detach()
 
         watermarkRenderer?.release()
         watermarkRenderer = null
@@ -343,12 +325,6 @@ class CaptureSession(
         pending = null
 
         CaptureDiagnostics.write(context)
-
-        try {
-            projection.unregisterCallback(callback)
-        } catch (e: RuntimeException) {
-            Log.w(TAG, "No se pudo desregistrar el callback", e)
-        }
     }
 
     private companion object {

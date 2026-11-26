@@ -45,6 +45,7 @@ class ScreenCaptureService : Service() {
 
     @Volatile private var session: CaptureSession? = null
     @Volatile private var projection: MediaProjection? = null
+    @Volatile private var host: ProjectionHost? = null
     @Volatile private var endRequested = false
     @Volatile private var finished = false
     @Volatile private var endAfterRecording = false
@@ -236,6 +237,9 @@ class ScreenCaptureService : Service() {
             return START_NOT_STICKY
         }
         projection = newProjection
+        host = ProjectionHost(applicationContext, newProjection) {
+            mainHandler.post { requestEndSession() }
+        }
         acquireWakeLock()
         showOverlay()
         CaptureNotification.update(
@@ -253,6 +257,7 @@ class ScreenCaptureService : Service() {
             notifyConfigApplied(localizedString(R.string.session_not_active))
             return
         }
+        val activeHost = host ?: return
         if (session != null || endRequested) return
 
         val settings = RecordingPreferences.load(this)
@@ -285,7 +290,7 @@ class ScreenCaptureService : Service() {
         val newSession = CaptureSession(
             applicationContext,
             activeProjection,
-            { requestEndSession() },
+            activeHost,
             { messageRes -> notifyConfigApplied(localizedString(messageRes)) },
         )
         session = newSession
@@ -464,6 +469,8 @@ class ScreenCaptureService : Service() {
         stopThermalMonitor()
         val activeProjection = projection
         projection = null
+        host?.release()
+        host = null
         if (activeProjection != null) {
             runCatching { activeProjection.stop() }
         }
@@ -589,8 +596,10 @@ class ScreenCaptureService : Service() {
         mainHandler.removeCallbacks(fpsTick)
         val currentSession = session
         val currentProjection = projection
+        val currentHost = host
         session = null
         projection = null
+        host = null
         overlay?.hide()
         overlay = null
         hideFpsOverlay()
@@ -598,6 +607,7 @@ class ScreenCaptureService : Service() {
         releaseWakeLock()
         lifecycle.execute {
             currentSession?.release()
+            currentHost?.release()
             if (currentProjection != null) {
                 runCatching { currentProjection.stop() }
             }

@@ -457,15 +457,17 @@ class MainActivity : Activity(), SetupHost {
         applyState(UiState.REQUESTING)
         currentSessionId = UUID.randomUUID().toString()
         val manager = getSystemService(MediaProjectionManager::class.java)
-        val singleApp = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
-            RecordingPreferences.load(this).captureMode == CaptureModeOption.SINGLE_APP
-        val consent = if (singleApp) {
-            // Android 14+: elegir una sola app limita la captura a esa app.
-            // La barra se desmonta al grabar, así que no aparece en ningún modo.
-            manager.createScreenCaptureIntent(
-                MediaProjectionConfig.createConfigForUserChoice(),
-            )
+        val mode = RecordingPreferences.load(this).captureMode
+        val consent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // Android 14+: cada modo usa su configuración explícita.
+            val config = if (mode == CaptureModeOption.SINGLE_APP) {
+                MediaProjectionConfig.createConfigForUserChoice()
+            } else {
+                MediaProjectionConfig.createConfigForDefaultDisplay()
+            }
+            manager.createScreenCaptureIntent(config)
         } else {
+            // Android 13 o anterior: solo existe captura de pantalla completa.
             @Suppress("DEPRECATION")
             manager.createScreenCaptureIntent()
         }

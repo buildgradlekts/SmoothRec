@@ -8,6 +8,7 @@ import android.os.HandlerThread
 import android.os.Process
 import android.util.Log
 import android.view.Surface
+import com.smoothrec.app.audio.CaptureDiagnostics
 import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -155,8 +156,18 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
         } finally {
             if (!started) {
                 // Limpia los objetos locales que release() todavía no conoce.
-                try { inputSurface?.release() } catch (_: Exception) {}
-                try { mediaCodec?.release() } catch (_: Exception) {}
+                try {
+                    inputSurface?.release()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Error al liberar la Surface del intento fallido", e)
+                    CaptureDiagnostics.log("Encoder $codecName: fallo al liberar surface: ${e.message}")
+                }
+                try {
+                    mediaCodec?.release()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Error al liberar el codec del intento fallido", e)
+                    CaptureDiagnostics.log("Encoder $codecName: fallo al liberar codec: ${e.message}")
+                }
                 this.output = null
             }
         }

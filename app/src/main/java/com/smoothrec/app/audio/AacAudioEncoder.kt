@@ -72,7 +72,12 @@ class AacAudioEncoder(
         } catch (e: Exception) {
             Log.e(TAG, "No se pudo iniciar el codec AAC", e)
             CaptureDiagnostics.log("Encoder AAC: fallo al iniciar ${e.javaClass.simpleName}")
-            try { mediaCodec.release() } catch (_: Exception) {}
+            try {
+                mediaCodec.release()
+            } catch (e: Exception) {
+                Log.w(TAG, "Error al liberar el codec AAC tras fallo de arranque", e)
+                CaptureDiagnostics.log("Encoder AAC: fallo al liberar codec: ${e.javaClass.simpleName}")
+            }
             healthState = AudioHealthState.ERROR
             return false
         }

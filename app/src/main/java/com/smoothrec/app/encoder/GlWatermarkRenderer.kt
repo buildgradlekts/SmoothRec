@@ -187,12 +187,12 @@ class GlWatermarkRenderer(
         st.getTransformMatrix(stMatrix)
         val ptsNs = if (textureTsNs > 0L) textureTsNs else nowNs
 
-        GLES20.glViewport(0, 0, width, height)
         // Sin glClear: el quad OES cubre todo el viewport y sobrescribe cada pixel.
         // Evita un write de pantalla completa por frame.
+        // El viewport y el estado de BLEND se fijan en initEgl() y se restauran
+        // al final de cada frame; no hay que reenviarlos dos veces por frame.
 
         // 1. Fotograma de pantalla (OES)
-        GLES20.glDisable(GLES20.GL_BLEND)
         GLES20.glUseProgram(oesProgram)
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTextureId)
@@ -290,6 +290,9 @@ class GlWatermarkRenderer(
         // La superficie va al encoder, no a una pantalla: cualquier espera a vsync
         // añadiría latencia innecesaria antes de la codificación.
         EGL14.eglSwapInterval(eglDisplay, 0)
+        // Tamaño fijo durante toda la sesión del renderer: fuera del camino caliente.
+        GLES20.glViewport(0, 0, width, height)
+        GLES20.glDisable(GLES20.GL_BLEND)
         Matrix.setIdentityM(stMatrix, 0)
     }
 

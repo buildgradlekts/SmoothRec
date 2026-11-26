@@ -13,6 +13,10 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Consulta de GitHub Releases y descarga del APK de actualización. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Comprobación REAL de conectividad antes de consultar/descargar. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- El usuario puede excluir SmoothRec de la optimización de batería desde el asistente. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Ventana flotante sobre juegos y otras aplicaciones. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- Mantiene la CPU despierta para que el encoder siga activo con la pantalla apagada. -->
@@ -53,6 +57,7 @@
 
         <activity
             android:name=".updater.UpdateInstallActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|uiMode|layoutDirection|locale"
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/Theme.SmoothRec" />
@@ -60,7 +65,7 @@
         <provider
             android:name=".updater.UpdateFileProvider"
             android:authorities="${applicationId}.updatefileprovider"
-            android:exported="true"
+            android:exported="false"
             android:grantUriPermissions="true" />
 
         <service

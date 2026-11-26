@@ -192,4 +192,49 @@
     <string name="fps_overlay_value">%1$d FPS</string>
     <string name="fps_overlay_waiting">-- FPS</string>
     <string name="fps_overlay_paused">रुका हुआ</string>
+    <!-- Setup assistant -->
+    <string name="setup_title">SmoothRec को तैयार करें</string>
+    <string name="setup_subtitle">रिकॉर्डिंग से पहले मुख्य अनुमतियाँ और सेटिंग्स देखें। कुछ भी स्वतः सक्षम नहीं होता।</string>
+    <string name="setup_later">बाद में</string>
+    <string name="setup_now">अभी सेट करें</string>
+    <string name="setup_configure">कॉन्फ़िगर करें</string>
+    <string name="setup_step_icon_description">सेटअप आइकन</string>
+    <string name="setup_progress">%1$d में से %2$d तैयार</string>
+    <string name="setup_status_enabled">सक्षम</string>
+    <string name="setup_status_pending">लंबित</string>
+    <string name="setup_status_unavailable">उपलब्ध नहीं</string>
+    <string name="setup_mic_title">माइक्रोफ़ोन</string>
+    <string name="setup_mic_description">स्क्रीन रिकॉर्ड करते समय आपकी आवाज़ कैप्चर करें।</string>
+    <string name="setup_internal_title">आंतरिक ऑडियो</string>
+    <string name="setup_internal_description">जब Android अनुमति दे, खेल और अन्य ऐप्स की आवाज़ रिकॉर्ड करें।</string>
+    <string name="setup_screen_title">स्क्रीन कैप्चर</string>
+    <string name="setup_screen_description">स्क्रीन रिकॉर्ड करने के लिए MediaProjection को अधिकृत करें।</string>
+    <string name="setup_battery_title">बैटरी प्रतिबंध नहीं</string>
+    <string name="setup_battery_description">Android को पृष्ठभूमि रिकॉर्डिंग रोकने से रोकें।</string>
+    <string name="setup_notifications_title">सूचनाएँ</string>
+    <string name="setup_notifications_description">सेवा को दिखाएँ और उससे रिकॉर्डिंग नियंत्रित करें।</string>
+    <string name="setup_all_ready">रिकॉर्डिंग के लिए सब कुछ तैयार है।</string>
+    <string name="setup_screen_hint">रिकॉर्ड दबाएँ और इस चरण को पूरा करने के लिए सिस्टम अनुमति स्वीकार करें।</string>
+    <string name="setup_permission_denied">अनुमति नहीं मिली। आप इसे सेटिंग्स से कभी भी चालू कर सकते हैं।</string>
+
+    <!-- OTA hardening -->
+    <string name="update_no_connection">इंटरनेट कनेक्शन नहीं है। नेटवर्क देखें और फिर प्रयास करें।</string>
+    <string name="update_downloading_version">%1$s डाउनलोड हो रहा है…</string>
+    <string name="update_download_size">%1$s में से %2$s</string>
+    <string name="update_download_size_unknown">%1$s डाउनलोड हुआ</string>
+    <string name="update_verifying">APK सत्यापित हो रहा है…</string>
+    <string name="update_verify_hash">SHA-256 मेलไม่ खाता (गणित %1$s)।</string>
+    <string name="update_verify_hash_missing">सर्वर ने SHA-256 प्रकाशित नहीं किया; अपडेट रोक दिया गया।</string>
+    <string name="update_verify_hash_error">APK का SHA-256 गणित नहीं हो सका।</string>
+    <string name="update_verify_invalid">डाउनलोड किया गया APK अमान्य है (%1$s)।</string>
+    <string name="update_verify_package">APK SmoothRec का नहीं है (%1$s)।</string>
+    <string name="update_verify_downgrade">APK नया संस्करण नहीं है (%1$s)।</string>
+    <string name="update_verify_version_mismatch">APK संस्करण प्रकाशित से मेल नहीं खाता (%1$s)।</string>
+    <string name="update_verify_compat">APK को नया Android चाहिए (%1$s)।</string>
+    <string name="update_verify_signature">APK हस्ताक्षर इंस्टॉल वाले से मेल नहीं खाता। पुराना संस्करण हटाएँ या आधिकारिक APK इस्तेमाल करें।</string>
+    <string name="update_download_http">डाउनलोड के दौरान HTTP त्रुटि %1$d।</string>
+    <string name="update_download_incomplete">डाउनलोड पूरा होने से पहले रुक गया।</string>
+    <string name="update_retry_in">ठीक होने योग्य त्रुटि। फिर प्रयास (%1$d में से %2$d)…</string>
+    <string name="update_cancelled">डाउनलोड रद्द किया गया।</string>
+    <string name="update_open_settings">सेटिंग्स खोलें</string>
 </resources>

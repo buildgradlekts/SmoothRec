@@ -192,4 +192,49 @@
     <string name="fps_overlay_value">%1$d FPS</string>
     <string name="fps_overlay_waiting">-- FPS</string>
     <string name="fps_overlay_paused">PAUSED</string>
+    <!-- Setup assistant -->
+    <string name="setup_title">Get SmoothRec ready</string>
+    <string name="setup_subtitle">Review key permissions and settings before recording. Nothing is enabled automatically.</string>
+    <string name="setup_later">Later</string>
+    <string name="setup_now">Set up now</string>
+    <string name="setup_configure">Configure</string>
+    <string name="setup_step_icon_description">Setup icon</string>
+    <string name="setup_progress">%1$d of %2$d ready</string>
+    <string name="setup_status_enabled">Enabled</string>
+    <string name="setup_status_pending">Pending</string>
+    <string name="setup_status_unavailable">Unavailable</string>
+    <string name="setup_mic_title">Microphone</string>
+    <string name="setup_mic_description">Capture your voice while recording the screen.</string>
+    <string name="setup_internal_title">Internal audio</string>
+    <string name="setup_internal_description">Record game and other app audio when Android allows it.</string>
+    <string name="setup_screen_title">Screen capture</string>
+    <string name="setup_screen_description">Authorize MediaProjection to record the screen.</string>
+    <string name="setup_battery_title">Unrestricted battery</string>
+    <string name="setup_battery_description">Prevent Android from stopping background recording.</string>
+    <string name="setup_notifications_title">Notifications</string>
+    <string name="setup_notifications_description">Keep the service visible and control recording from it.</string>
+    <string name="setup_all_ready">Everything is ready to record.</string>
+    <string name="setup_screen_hint">Tap Record and accept the system permission to finish this step.</string>
+    <string name="setup_permission_denied">Permission not granted. You can enable it in Settings at any time.</string>
+
+    <!-- OTA hardening -->
+    <string name="update_no_connection">No internet connection. Check your network and try again.</string>
+    <string name="update_downloading_version">Downloading %1$s…</string>
+    <string name="update_download_size">%1$s of %2$s</string>
+    <string name="update_download_size_unknown">%1$s downloaded</string>
+    <string name="update_verifying">Verifying APK…</string>
+    <string name="update_verify_hash">SHA-256 mismatch (calculated %1$s).</string>
+    <string name="update_verify_hash_missing">The server did not publish a SHA-256; update stopped.</string>
+    <string name="update_verify_hash_error">Could not calculate the APK SHA-256.</string>
+    <string name="update_verify_invalid">The downloaded APK is invalid (%1$s).</string>
+    <string name="update_verify_package">The APK does not belong to SmoothRec (%1$s).</string>
+    <string name="update_verify_downgrade">The APK is not a newer version (%1$s).</string>
+    <string name="update_verify_version_mismatch">The APK version does not match the published one (%1$s).</string>
+    <string name="update_verify_compat">The APK requires a newer Android version (%1$s).</string>
+    <string name="update_verify_signature">APK signature does not match the installed one. Uninstall the old version or use the official APK.</string>
+    <string name="update_download_http">HTTP error %1$d while downloading.</string>
+    <string name="update_download_incomplete">The download stopped before finishing.</string>
+    <string name="update_retry_in">Recoverable error. Retrying (%1$d of %2$d)…</string>
+    <string name="update_cancelled">Download cancelled.</string>
+    <string name="update_open_settings">Open settings</string>
 </resources>

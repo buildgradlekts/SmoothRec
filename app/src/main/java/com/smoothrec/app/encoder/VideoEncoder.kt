@@ -24,6 +24,8 @@ interface VideoEncoder {
     fun setPausedOffsetUs(pausedOffsetUs: Long)
     fun requestSyncFrame()
     fun effectiveFps(): Int
+    /** Estadísticas reales de salida; la implementación por defecto no mide nada. */
+    fun stats(): EncoderStats = EncoderStats()
     fun isRunning(): Boolean
     fun lastError(): String?
     /** Señala el fin del stream sin esperar, para drenar audio y vídeo a la vez. */

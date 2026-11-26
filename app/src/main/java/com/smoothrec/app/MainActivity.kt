@@ -37,6 +37,8 @@ import com.smoothrec.app.recording.AppLanguageOption
 import com.smoothrec.app.recording.CaptureModeOption
 import com.smoothrec.app.recording.RecordingPreferences
 import com.smoothrec.app.recording.ThemeModeOption
+import com.smoothrec.app.setup.SetupAssistant
+import com.smoothrec.app.setup.SetupHost
 import com.smoothrec.app.ui.LocaleHelper
 import com.smoothrec.app.ui.ThemeHelper
 import com.smoothrec.app.updater.UpdateManager
@@ -50,7 +52,7 @@ import java.util.concurrent.Executors
  * 1. Inicio (controles de grabación y monitor ligero del motor).
  * 2. Grabaciones (solo archivos MP4 propios de SmoothRec en Movies/SmoothRec).
  */
-class MainActivity : Activity() {
+class MainActivity : Activity(), SetupHost {
 
     private enum class UiState { READY, REQUESTING, SESSION, RECORDING, PAUSED, STOPPED }
     private enum class Tab { HOME, RECORDINGS }
@@ -239,6 +241,10 @@ class MainActivity : Activity() {
         if (activeTab == Tab.RECORDINGS) {
             loadRecordings()
         }
+        SetupAssistant.maybeShow(
+            this,
+            allowed = uiState != UiState.RECORDING && uiState != UiState.PAUSED,
+        )
     }
 
     override fun onStop() {
@@ -249,6 +255,7 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        SetupAssistant.onActivityDestroyed(this)
         ioExecutor.shutdownNow()
         thumbExecutor.shutdownNow()
         super.onDestroy()
@@ -421,6 +428,10 @@ class MainActivity : Activity() {
         grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == SetupAssistant.REQUEST_SETUP_PERMISSIONS) {
+            SetupAssistant.onPermissionsResult(this, requestCode)
+            return
+        }
         if (requestCode != REQUEST_PERMISSIONS) return
 
         val audioGranted = checkSelfPermission(Manifest.permission.RECORD_AUDIO) ==
@@ -436,6 +447,10 @@ class MainActivity : Activity() {
             Toast.makeText(this, R.string.notification_permission_denied, Toast.LENGTH_LONG).show()
         }
         if (ensureOverlayPermission()) launchProjectionConsent()
+    }
+
+    override fun requestScreenCaptureAuthorization() {
+        launchProjectionConsent()
     }
 
     private fun launchProjectionConsent() {
@@ -468,6 +483,7 @@ class MainActivity : Activity() {
         }
 
         applyState(UiState.SESSION)
+        SetupAssistant.markScreenCaptureAuthorized(this)
         val serviceIntent = Intent(this, ScreenCaptureService::class.java).apply {
             action = ScreenCaptureService.ACTION_START
             putExtra(ScreenCaptureService.EXTRA_RESULT_CODE, resultCode)
@@ -479,6 +495,7 @@ class MainActivity : Activity() {
         } else {
             startService(serviceIntent)
         }
+        SetupAssistant.refreshIfShowing()
     }
 
     private fun applyTelemetry(telemetry: RecordingTelemetry) {

@@ -20,6 +20,7 @@ import android.util.Log
 import java.util.concurrent.Executor
 import java.util.concurrent.locks.LockSupport
 import com.smoothrec.app.R
+import com.smoothrec.app.compat.DeviceCompat
 import com.smoothrec.app.recording.AudioSourceOption
 import com.smoothrec.app.recording.ChannelOption
 import kotlin.math.abs
@@ -62,6 +63,18 @@ data class AudioFormatSpec(
         .setSampleRate(sampleRate)
         .setChannelMask(outputChannelConfig)
         .build()
+
+    /**
+     * La captura de reproducción usa máscaras de SALIDA. Pedir el búfer mínimo
+     * con [inputChannelConfig] (CHANNEL_IN_MONO = 0x10) devuelve un tamaño que
+     * en algunos OEM —incluidos Samsung— no corresponde a CHANNEL_OUT_MONO
+     * (0x04) y puede terminar en AudioRecord inicializado pero mudo.
+     */
+    fun minBufferSize(forPlaybackCapture: Boolean): Int = AudioRecord.getMinBufferSize(
+        sampleRate,
+        if (forPlaybackCapture) outputChannelConfig else inputChannelConfig,
+        AudioFormat.ENCODING_PCM_16BIT,
+    )
 }
 
 /** Correspondencia real entre el frame capturado y el reloj monotónico. */
@@ -112,6 +125,21 @@ class PcmSource private constructor(
     // Se guarda como Any para no resolver AudioManager.AudioRecordingCallback
     // (API 29) en dispositivos antiguos donde este código nunca se ejecuta.
     private var recordingCallback: Any? = null
+
+    /** La fuente ya se inició dentro de createMicWithFallback(). */
+    fun markStartedExternally() {
+        started = record.recordingState == AudioRecord.RECORDSTATE_RECORDING
+    }
+
+    /** Android 10+ informa si la política del sistema ha silenciado esta captura. */
+    fun isSilencedBySystem(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false
+        return try {
+            record.activeRecordingConfiguration?.isClientSilenced == true
+        } catch (_: Exception) {
+            false
+        }
+    }
 
     fun start(): Boolean {
         if (started) return true
@@ -444,11 +472,7 @@ class PcmSource private constructor(
                     .addMatchingUsage(AudioAttributes.USAGE_GAME)
                     .addMatchingUsage(AudioAttributes.USAGE_UNKNOWN)
                     .build()
-                val minBuffer = AudioRecord.getMinBufferSize(
-                    spec.sampleRate,
-                    spec.inputChannelConfig,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                )
+                val minBuffer = spec.minBufferSize(forPlaybackCapture = true)
                 if (minBuffer <= 0) {
                     Log.w(TAG, "Audio interno: búfer mínimo inválido ($minBuffer)")
                     return null
@@ -481,37 +505,81 @@ class PcmSource private constructor(
             }
         }
 
-        fun createMic(spec: AudioFormatSpec): PcmSource? {
-            return try {
-                val minBuffer = AudioRecord.getMinBufferSize(
-                    spec.sampleRate,
-                    spec.inputChannelConfig,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                )
-                if (minBuffer <= 0) {
-                    Log.w(TAG, "Micrófono: búfer mínimo inválido ($minBuffer)")
-                    return null
+        /**
+         * MIC es la fuente correcta para una grabación de pantalla. En algunos
+         * Samsung/OEM el camino MIC queda ocupado o silenciado por la política
+         * del sistema; se prueban entonces fuentes públicas alternativas antes
+         * de declarar la grabación muda. Nunca se modifica ningún ajuste del
+         * sistema: solo se elige otro AudioSource dentro de la misma app.
+         */
+        private val MIC_SOURCES = intArrayOf(
+            MediaRecorder.AudioSource.MIC,
+            MediaRecorder.AudioSource.VOICE_RECOGNITION,
+            MediaRecorder.AudioSource.DEFAULT,
+        )
+
+        fun micSourceLabel(source: Int): String = when (source) {
+            MediaRecorder.AudioSource.MIC -> "MIC"
+            MediaRecorder.AudioSource.VOICE_RECOGNITION -> "VOICE_RECOGNITION"
+            MediaRecorder.AudioSource.DEFAULT -> "DEFAULT"
+            else -> "source=$source"
+        }
+
+        fun createMic(spec: AudioFormatSpec): PcmSource? = createMicWithFallback(spec, MIC_SOURCES)
+
+        fun createMicWithFallback(spec: AudioFormatSpec, sources: IntArray): PcmSource? {
+            val minBuffer = spec.minBufferSize(forPlaybackCapture = false)
+            if (minBuffer <= 0) {
+                Log.w(TAG, "Micrófono: búfer mínimo inválido ($minBuffer)")
+                return null
+            }
+            var lastError: Exception? = null
+            for (source in sources) {
+                val record = try {
+                    AudioRecord.Builder()
+                        .setAudioSource(source)
+                        .setAudioFormat(spec.buildMicFormat())
+                        .setBufferSizeInBytes(minBuffer * 2)
+                        .build()
+                } catch (e: Exception) {
+                    lastError = e
+                    null
                 }
-                val record = AudioRecord.Builder()
-                    .setAudioSource(MediaRecorder.AudioSource.MIC)
-                    .setAudioFormat(spec.buildMicFormat())
-                    .setBufferSizeInBytes(minBuffer * 2)
-                    .build()
-                if (record.state != AudioRecord.STATE_INITIALIZED) {
-                    Log.w(TAG, "Micrófono no inicializado: estado=${record.state}")
-                    record.release()
-                    return null
+                if (record == null || record.state != AudioRecord.STATE_INITIALIZED) {
+                    Log.w(TAG, "Micrófono ${micSourceLabel(source)} no inicializado")
+                    record?.release()
+                    continue
+                }
+                val label = "micrófono (${micSourceLabel(source)})"
+                val result = PcmSource(record, spec, record.channelCount, label, isInternal = false)
+                if (!result.start()) {
+                    Log.w(TAG, "$label no arrancó")
+                    result.release()
+                    continue
+                }
+                if (result.isSilencedBySystem()) {
+                    Log.w(TAG, "$label silenciado por el sistema; se prueba otra fuente")
+                    CaptureDiagnostics.log("$label silenciado por el sistema; se prueba otra fuente")
+                    result.release()
+                    continue
                 }
                 Log.i(
                     TAG,
-                    "Micrófono creado: canales=${record.channelCount} rate=${record.sampleRate} " +
+                    "$label listo: canales=${record.channelCount} rate=${record.sampleRate} " +
                         "búfer=${record.bufferSizeInFrames} frames",
                 )
-                PcmSource(record, spec, record.channelCount, "micrófono", isInternal = false)
-            } catch (e: Exception) {
-                Log.w(TAG, "Micrófono no disponible: $spec", e)
-                null
+                CaptureDiagnostics.log(
+                    "Micrófono seleccionado: ${micSourceLabel(source)} " +
+                        "canales=${record.channelCount} rate=${record.sampleRate}",
+                )
+                // Ya está arrancado: startSources() no debe iniciarlo dos veces.
+                result.markStartedExternally()
+                return result
             }
+            if (lastError != null) {
+                Log.w(TAG, "Micrófono no disponible: $spec", lastError)
+            }
+            return null
         }
     }
 }
@@ -713,12 +781,7 @@ object AudioCaptureFactory {
 
     private const val TAG = "AudioCaptureFactory"
 
-    /**
-     * AOSP usa 44100 Hz para la captura interna. Se prueba primero esa tasa
-     * porque es la más compatible con el AudioMix de reproducción; después
-     * 48000 Hz, que es la tasa nativa habitual del dispositivo.
-     */
-    private val INTERNAL_RATES = intArrayOf(44_100, 48_000)
+    /** Tasas del micrófono. El audio interno usa las de DeviceCompat. */
     private val MIC_RATES = intArrayOf(48_000, 44_100)
 
     fun create(
@@ -729,6 +792,7 @@ object AudioCaptureFactory {
         onFallback: () -> Unit = {},
     ): AudioSetupResult {
         CaptureDiagnostics.reset()
+        DeviceCompat.log(context)
         CaptureDiagnostics.log("Nueva grabación: fuente=${option.key} canales=${channelOption.key}")
         if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
             PackageManager.PERMISSION_GRANTED
@@ -737,7 +801,7 @@ object AudioCaptureFactory {
         }
 
         // 1) Se intenta exactamente el número de canales elegido por el usuario.
-        chooseSpec(option, channelOption)?.let { spec ->
+        chooseSpec(context, option, channelOption)?.let { spec ->
             val plan = buildPlan(projection, option, spec, onFallback, initialNoticeRes = null)
             Log.i(
                 TAG,
@@ -753,7 +817,7 @@ object AudioCaptureFactory {
         // 2) Si el dispositivo no admite esa máscara, se prueba la contraria.
         val alternative = if (channelOption == ChannelOption.STEREO) ChannelOption.MONO
         else ChannelOption.STEREO
-        chooseSpec(option, alternative)?.let { spec ->
+        chooseSpec(context, option, alternative)?.let { spec ->
             val plan = buildPlan(
                 projection,
                 option,
@@ -782,20 +846,23 @@ object AudioCaptureFactory {
      * real puede hacerse después del VirtualDisplay sin arriesgar la pista AAC.
      */
     private fun chooseSpec(
+        context: Context,
         option: AudioSourceOption,
         channelOption: ChannelOption,
     ): AudioFormatSpec? {
-        val rates = if (option == AudioSourceOption.MIC) MIC_RATES else INTERNAL_RATES
+        val profile = DeviceCompat.profile(context)
+        val needsInternal = option != AudioSourceOption.MIC
+        val needsMic = option != AudioSourceOption.INTERNAL
+        val rates = if (option == AudioSourceOption.MIC) {
+            MIC_RATES
+        } else {
+            profile.preferredInternalRates
+        }
         for (rate in rates) {
             val spec = AudioFormatSpec(rate, channelOption.channelCount)
-            if (AudioRecord.getMinBufferSize(
-                    rate,
-                    spec.inputChannelConfig,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                ) <= 0
-            ) {
-                continue
-            }
+            val internalOk = !needsInternal || spec.minBufferSize(forPlaybackCapture = true) > 0
+            val micOk = !needsMic || spec.minBufferSize(forPlaybackCapture = false) > 0
+            if (!internalOk || !micOk) continue
             if (!aacEncoderAvailable(spec)) continue
             return spec
         }
@@ -838,6 +905,15 @@ object AudioCaptureFactory {
                     Log.e(TAG, "Audio interno no disponible: no se usará el micrófono")
                     CaptureDiagnostics.log("RESULTADO: audio interno NO arrancó. Sin micrófono.")
                     return AudioSourceStart(null, emptyList(), R.string.audio_fallback_internal)
+                }
+                if (internal.isSilencedBySystem()) {
+                    Log.w(TAG, "Audio interno silenciado por política del sistema")
+                    CaptureDiagnostics.log("RESULTADO: audio interno silenciado por el sistema")
+                    return AudioSourceStart(
+                        internal,
+                        listOf(internal),
+                        R.string.audio_internal_silent,
+                    )
                 }
                 CaptureDiagnostics.log("RESULTADO: solo audio interno (sin micrófono)")
                 return AudioSourceStart(internal, listOf(internal))

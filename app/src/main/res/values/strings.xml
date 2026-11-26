@@ -226,4 +226,49 @@
     <string name="fps_overlay_value">%1$d FPS</string>
     <string name="fps_overlay_waiting">-- FPS</string>
     <string name="fps_overlay_paused">PAUSA</string>
+    <!-- Setup assistant -->
+    <string name="setup_title">Prepara SmoothRec</string>
+    <string name="setup_subtitle">Revisa los permisos y ajustes clave antes de grabar. Nada se activa automáticamente.</string>
+    <string name="setup_later">Más tarde</string>
+    <string name="setup_now">Configurar ahora</string>
+    <string name="setup_configure">Configurar</string>
+    <string name="setup_step_icon_description">Icono de ajuste</string>
+    <string name="setup_progress">%1$d de %2$d listos</string>
+    <string name="setup_status_enabled">Activado</string>
+    <string name="setup_status_pending">Pendiente</string>
+    <string name="setup_status_unavailable">No disponible</string>
+    <string name="setup_mic_title">Micrófono</string>
+    <string name="setup_mic_description">Captura tu voz mientras grabas la pantalla.</string>
+    <string name="setup_internal_title">Audio interno</string>
+    <string name="setup_internal_description">Graba el sonido de juegos y otras apps cuando Android lo permite.</string>
+    <string name="setup_screen_title">Captura de pantalla</string>
+    <string name="setup_screen_description">Autoriza MediaProjection para grabar la pantalla.</string>
+    <string name="setup_battery_title">Batería sin restricciones</string>
+    <string name="setup_battery_description">Evita que Android detenga la grabación en segundo plano.</string>
+    <string name="setup_notifications_title">Notificaciones</string>
+    <string name="setup_notifications_description">Mantiene el servicio visible y permite controlar la grabación.</string>
+    <string name="setup_all_ready">Todo está listo para grabar.</string>
+    <string name="setup_screen_hint">Pulsa Grabar y acepta el permiso del sistema para terminar este paso.</string>
+    <string name="setup_permission_denied">Permiso no concedido. Puedes activarlo desde Ajustes cuando quieras.</string>
+
+    <!-- OTA hardening -->
+    <string name="update_no_connection">Sin conexión a internet. Revisa tu red e inténtalo de nuevo.</string>
+    <string name="update_downloading_version">Descargando %1$s…</string>
+    <string name="update_download_size">%1$s de %2$s</string>
+    <string name="update_download_size_unknown">%1$s descargados</string>
+    <string name="update_verifying">Verificando APK…</string>
+    <string name="update_verify_hash">El SHA-256 no coincide (calculado %1$s).</string>
+    <string name="update_verify_hash_missing">El servidor no publicó SHA-256; la actualización se ha detenido.</string>
+    <string name="update_verify_hash_error">No se pudo calcular el SHA-256 del APK.</string>
+    <string name="update_verify_invalid">El APK descargado no es válido (%1$s).</string>
+    <string name="update_verify_package">El APK no corresponde a SmoothRec (%1$s).</string>
+    <string name="update_verify_downgrade">El APK no es una versión superior (%1$s).</string>
+    <string name="update_verify_version_mismatch">La versión del APK no coincide con la publicada (%1$s).</string>
+    <string name="update_verify_compat">El APK requiere una versión de Android superior (%1$s).</string>
+    <string name="update_verify_signature">La firma del APK no coincide con la instalada. Desinstala la versión anterior o usa el APK oficial.</string>
+    <string name="update_download_http">Error HTTP %1$d al descargar.</string>
+    <string name="update_download_incomplete">La descarga se interrumpió antes de completarse.</string>
+    <string name="update_retry_in">Error recuperable. Reintentando (%1$d de %2$d)…</string>
+    <string name="update_cancelled">Descarga cancelada.</string>
+    <string name="update_open_settings">Abrir ajustes</string>
 </resources>

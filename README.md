@@ -65,6 +65,22 @@ La pantalla de ajustes permite elegir resolución (Pantalla, 1080P, 720P) y FPS 
 
 En el Redmi Note 13 4G (pantalla 1080×2400, límite hardware 1920×1920), Pantalla y 1080P convergen en **864×1920** porque conservar la relación 9:20 impide alcanzar 1080 píxeles en el lado corto sin deformar. 720P produce **720×1600**. En pantallas con otra relación (p. ej. 1080×2160) las opciones sí difieren: 1080P → 960×1920, 720P → 720×1440.
 
+## Optimización de rendimiento (implementada; validación en dispositivo pendiente)
+
+Cambios aplicados al motor sin modificar la interfaz, el audio, las preferencias ni la calidad seleccionada:
+
+- **Ruta GL con marca de agua:** los eventos de `SurfaceTexture` se coalescen, por lo que solo queda un dibujo pendiente. Si llegan varios frames mientras se renderiza, se conserva el más reciente y los obsoletos se descartan (`staleFramesDropped`). No se bajan los FPS configurados.
+- **Menos ancho de banda GPU:** se eliminó el `glClear` de pantalla completa porque el quad OES cubre todo el viewport; `eglSwapInterval(0)` evita esperas a vsync en la superficie del encoder.
+- **Telemetría real separada:** `captureFps` se mide de los frames entregados por `SurfaceTexture`; `effectiveFps` sigue midiendo los PTS reales de MediaCodec. Se registran frames obsoletos, cola máxima, edad máxima del frame, huecos de PTS, entregas/escrituras lentas y estado térmico (`PowerManager`, API 29+). No se sintetizan FPS ni se muestra ningún valor estimado como real.
+- **Sin asignaciones por frame nuevas:** los contadores son primitivos y las instantáneas se publican como máximo dos veces por segundo. La ruta estable del muxer sigue sin copiar `ByteBuffer`.
+- **Monitor térmico:** solo informa; no reduce resolución, bitrate ni FPS automáticamente.
+
+Dónde ver los datos: `Descargas/SmoothRec-diagnostico.txt` contiene líneas `Telemetría:` cada 10 s y un resumen `Rendimiento:` / `Temperatura final:` al detener. También se emite el broadcast `com.smoothrec.app.action.RECORDING_STATS` con los extras `extra_capture_fps`, `extra_dropped_frames`, `extra_pts_gap_frames`, `extra_max_write_ms` y `extra_thermal_status`. El overlay flotante sigue mostrando únicamente los FPS reales del encoder.
+
+**Limitación de medición:** con la marca de agua desactivada, `VirtualDisplay` escribe directamente en la `Surface` de MediaCodec y no existe un consumidor intermedio que pueda contar frames de captura sin añadir una copia; en ese modo `captureFps` es `0` (no medido), nunca un valor estimado.
+
+**Validación:** el proyecto no contiene tests automatizados y este entorno no tiene `adb` ni dispositivo, así que **no se ha ejecutado la prueba de eFootball**. La estabilidad real a 60 FPS debe comprobarse instalando la APK y revisando el diagnóstico; este cambio no afirma haber alcanzado 60 FPS estables.
+
 ## Audio (implementado)
 
 - Modalidades seleccionables: **Audio interno**, **Micrófono** e **Interno + micrófono** (por defecto, audio interno).

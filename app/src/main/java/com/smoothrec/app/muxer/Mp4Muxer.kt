@@ -49,6 +49,9 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
     private var released = false
     private var bytesWritten = 0L
     private var writeErrors = 0
+    private var slowWrites = 0
+    private var maxWriteNs = 0L
+    private var samplesWritten = 0L
     private var stopFailed = false
     private var firstVideoSampleNs = 0L
 
@@ -238,13 +241,30 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
     }
 
     private fun write(index: Int, buffer: ByteBuffer, info: MediaCodec.BufferInfo) {
+        val startNs = System.nanoTime()
         try {
             muxer?.writeSampleData(index, buffer, info)
             bytesWritten += info.size
+            samplesWritten++
         } catch (e: Exception) {
             writeErrors++
             Log.w(TAG, "Error al escribir una muestra ($writeErrors)", e)
+        } finally {
+            val elapsedNs = System.nanoTime() - startNs
+            if (elapsedNs > maxWriteNs) maxWriteNs = elapsedNs
+            if (elapsedNs >= SLOW_WRITE_THRESHOLD_NS) slowWrites++
         }
+    }
+
+    fun stats(): MuxerStats = synchronized(lock) {
+        MuxerStats(
+            samplesWritten = samplesWritten,
+            bytesWritten = bytesWritten,
+            maxWriteMs = (maxWriteNs / 1_000_000L)
+                .coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+            slowWrites = slowWrites,
+            writeErrors = writeErrors,
+        )
     }
 
     private fun flushPending() {
@@ -293,11 +313,15 @@ class Mp4Muxer(private val fileDescriptor: ParcelFileDescriptor) : EncoderOutput
         lastPts.clear()
         pending.clear()
         monotonicFixes = 0
+        slowWrites = 0
+        maxWriteNs = 0L
+        samplesWritten = 0L
     }
 
     private companion object {
         const val TAG = "Mp4Muxer"
         const val AUDIO_WAIT_TIMEOUT_NS = 2_000_000_000L
         const val MAX_SAME_EPOCH_DIFF_US = 5_000_000L
+        const val SLOW_WRITE_THRESHOLD_NS = 2_000_000L
     }
 }

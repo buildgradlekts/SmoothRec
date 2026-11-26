@@ -192,4 +192,49 @@
     <string name="fps_overlay_value">%1$d FPS</string>
     <string name="fps_overlay_waiting">-- FPS</string>
     <string name="fps_overlay_paused">متوقف</string>
+    <!-- Setup assistant -->
+    <string name="setup_title">جهّز SmoothRec</string>
+    <string name="setup_subtitle">راجع الأذونات والإعدادات المهمة قبل التسجيل. لا يتم تفعيل أي شيء تلقائيًا.</string>
+    <string name="setup_later">لاحقًا</string>
+    <string name="setup_now">إعداد الآن</string>
+    <string name="setup_configure">ضبط</string>
+    <string name="setup_step_icon_description">أيقونة إعداد</string>
+    <string name="setup_progress">%1$d من %2$d جاهز</string>
+    <string name="setup_status_enabled">مفعّل</string>
+    <string name="setup_status_pending">قيد الانتظار</string>
+    <string name="setup_status_unavailable">غير متاح</string>
+    <string name="setup_mic_title">الميكروفون</string>
+    <string name="setup_mic_description">التقط صوتك أثناء تسجيل الشاشة.</string>
+    <string name="setup_internal_title">الصوت الداخلي</string>
+    <string name="setup_internal_description">سجّل صوت الألعاب والتطبيقات عندما يسمح Android.</string>
+    <string name="setup_screen_title">تسجيل الشاشة</string>
+    <string name="setup_screen_description">اسمح بـ MediaProjection لتسجيل الشاشة.</string>
+    <string name="setup_battery_title">بطارية دون قيود</string>
+    <string name="setup_battery_description">امنع Android من إيقاف التسجيل في الخلفية.</string>
+    <string name="setup_notifications_title">الإشعارات</string>
+    <string name="setup_notifications_description">أبقِ الخدمة مرئية وتحكم بالتسجيل منها.</string>
+    <string name="setup_all_ready">كل شيء جاهز للتسجيل.</string>
+    <string name="setup_screen_hint">اضغط تسجيل واقبل إذن النظام لإكمال هذه الخطوة.</string>
+    <string name="setup_permission_denied">لم يُمنح الإذن. يمكنك تفعيله من الإعدادات لاحقًا.</string>
+
+    <!-- OTA hardening -->
+    <string name="update_no_connection">لا يوجد اتصال بالإنترنت. تحقق من الشبكة وحاول مرة أخرى.</string>
+    <string name="update_downloading_version">جارٍ تنزيل %1$s…</string>
+    <string name="update_download_size">%1$s من %2$s</string>
+    <string name="update_download_size_unknown">تم تنزيل %1$s</string>
+    <string name="update_verifying">جارٍ التحقق من APK…</string>
+    <string name="update_verify_hash">SHA-256 غير مطابق (المحسوب %1$s).</string>
+    <string name="update_verify_hash_missing">لم ينشر الخادم SHA-256؛ تم إيقاف التحديث.</string>
+    <string name="update_verify_hash_error">تعذر حساب SHA-256 لـ APK.</string>
+    <string name="update_verify_invalid">APK الذي تم تنزيله غير صالح (%1$s).</string>
+    <string name="update_verify_package">APK لا يخص SmoothRec (%1$s).</string>
+    <string name="update_verify_downgrade">APK ليس إصدارًا أحدث (%1$s).</string>
+    <string name="update_verify_version_mismatch">إصدار APK لا يطابق المنشور (%1$s).</string>
+    <string name="update_verify_compat">APK يتطلب إصدار Android أحدث (%1$s).</string>
+    <string name="update_verify_signature">توقيع APK لا يطابق المثبت. أزل الإصدار القديم أو استخدم APK الرسمي.</string>
+    <string name="update_download_http">خطأ HTTP %1$d أثناء التنزيل.</string>
+    <string name="update_download_incomplete">توقف التنزيل قبل اكتماله.</string>
+    <string name="update_retry_in">خطأ قابل للاستعادة. إعادة المحاولة (%1$d من %2$d)…</string>
+    <string name="update_cancelled">تم إلغاء التنزيل.</string>
+    <string name="update_open_settings">فتح الإعدادات</string>
 </resources>

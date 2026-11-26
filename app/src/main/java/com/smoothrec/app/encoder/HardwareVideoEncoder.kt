@@ -38,6 +38,15 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
     private var firstRawPts = -1L
     private var lastRawPts = -1L
 
+    private var frameRate = 60
+    private var encodedFrames = 0L
+    private var ptsGapFrames = 0L
+    private var maxPtsGapMs = 0
+    private var slowDeliveries = 0
+    private var maxDeliveryNs = 0L
+    private var previousEncodedPtsUs = -1L
+    @Volatile private var statsSnapshot = EncoderStats()
+
     // FPS efectivos calculados con los PTS reales de los frames codificados.
     // Se mantiene una ventana corta para que el indicador responda rápido sin
     // asignaciones ni trabajo extra en el hilo de audio o en el muxer.
@@ -48,6 +57,7 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
 
     override fun start(config: EncoderConfig, output: EncoderOutput) {
         this.output = output
+        frameRate = config.frameRate.coerceAtLeast(1)
         val mediaCodec = MediaCodec.createByCodecName(codecName)
 
         configureWithFallback(mediaCodec, config)
@@ -72,6 +82,7 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
                 val isConfig = info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
                 if (buffer != null && info.size > 0 && !isConfig && !paused) {
                     buffersDelivered++
+                    encodedFrames++
                     if (firstRawPts < 0) firstRawPts = info.presentationTimeUs
                     lastRawPts = info.presentationTimeUs
 
@@ -82,7 +93,12 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
                     }
 
                     updateEffectiveFps(info.presentationTimeUs)
+                    recordPtsGap(info.presentationTimeUs)
 
+                    // Medimos el tiempo real de entrega al muxer: si este hilo se
+                    // bloquea, MediaCodec se queda sin buffers de salida y aparecen
+                    // tirones. No cambia el flujo, solo cuantifica la saturación.
+                    val deliveryStartNs = System.nanoTime()
                     buffer.position(info.offset)
                     buffer.limit(info.offset + info.size)
                     try {
@@ -93,6 +109,10 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
                         )
                     } catch (e: Exception) {
                         Log.e(TAG, "Error al entregar paquete codificado", e)
+                    } finally {
+                        val deliveryNs = System.nanoTime() - deliveryStartNs
+                        if (deliveryNs > maxDeliveryNs) maxDeliveryNs = deliveryNs
+                        if (deliveryNs >= SLOW_DELIVERY_THRESHOLD_NS) slowDeliveries++
                     }
                 }
 
@@ -178,8 +198,37 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
             fpsWindowStartPtsUs = ptsUs
             fpsWindowLastPtsUs = ptsUs
             fpsWindowFrames = 1
+            publishStats()
         }
     }
+
+    /** Cuenta huecos reales entre PTS consecutivos; nunca genera PTS artificiales. */
+    private fun recordPtsGap(ptsUs: Long) {
+        val expectedUs = 1_000_000L / frameRate
+        val previous = previousEncodedPtsUs
+        if (previous >= 0L && ptsUs > previous) {
+            val deltaUs = ptsUs - previous
+            if (deltaUs > expectedUs * 3L / 2L) {
+                val missing = (deltaUs / expectedUs).coerceAtLeast(1L) - 1L
+                ptsGapFrames += missing.coerceAtLeast(1L)
+                val gapMs = (deltaUs / 1_000L).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+                if (gapMs > maxPtsGapMs) maxPtsGapMs = gapMs
+            }
+        }
+        previousEncodedPtsUs = ptsUs
+    }
+
+    private fun publishStats() {
+        statsSnapshot = EncoderStats(
+            encodedFrames = encodedFrames,
+            ptsGapFrames = ptsGapFrames,
+            maxPtsGapMs = maxPtsGapMs,
+            slowDeliveries = slowDeliveries,
+            maxDeliveryMs = (maxDeliveryNs / 1_000_000L).coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+        )
+    }
+
+    override fun stats(): EncoderStats = statsSnapshot
 
     override fun inputSurface(): Surface =
         surface ?: throw IllegalStateException("El encoder todavía no está iniciado")
@@ -191,11 +240,15 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
             fpsWindowStartPtsUs = -1L
             fpsWindowLastPtsUs = -1L
             fpsWindowFrames = 0
+            // Evita contar el salto de PTS de la reanudación como frame perdido.
+            previousEncodedPtsUs = -1L
+            publishStats()
         }
     }
 
     override fun setPausedOffsetUs(pausedOffsetUs: Long) {
         this.pausedOffsetUs = pausedOffsetUs.coerceAtLeast(0L)
+        previousEncodedPtsUs = -1L
     }
 
     override fun requestSyncFrame() {
@@ -234,6 +287,7 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
         }
+        publishStats()
         Log.i(
             TAG,
             "Vídeo drenado: buffers=$buffersDelivered PTS crudos $firstRawPts..$lastRawPts us",
@@ -243,6 +297,7 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
     override fun release() {
         if (!released.compareAndSet(false, true)) return
         running.set(false)
+        publishStats()
 
         try {
             codec?.stop()
@@ -274,5 +329,6 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
 
     private companion object {
         const val TAG = "HardwareVideoEncoder"
+        const val SLOW_DELIVERY_THRESHOLD_NS = 2_000_000L
     }
 }

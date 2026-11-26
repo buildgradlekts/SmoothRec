@@ -235,6 +235,9 @@ class CaptureSession(
         val cfg = appliedResolution?.config
         val enc = encoder
         val aud = audioEncoder
+        val captureStats = watermarkRenderer?.stats()
+        val encoderStats = enc?.stats()
+        val muxerStats = muxer?.stats()
         val audState = aud?.state()
         val encError = enc?.lastError()
         val encState = when {
@@ -256,6 +259,37 @@ class CaptureSession(
             paused = paused,
             elapsedActiveMs = elapsedActiveMs,
             lastError = encError,
+            captureFps = captureStats?.captureFps ?: 0,
+            droppedFrames = captureStats?.staleFramesDropped ?: 0L,
+            captureBacklogMax = captureStats?.maxPendingFrames ?: 0,
+            frameAgeMaxMs = captureStats?.maxFrameAgeMs ?: 0,
+            ptsGapFrames = encoderStats?.ptsGapFrames ?: 0L,
+            maxPtsGapMs = encoderStats?.maxPtsGapMs ?: 0,
+            slowWrites = muxerStats?.slowWrites ?: 0,
+            maxWriteMs = muxerStats?.maxWriteMs ?: 0,
+        )
+    }
+
+    /** Resumen final con métricas reales, escrito en el diagnóstico de la sesión. */
+    private fun logPerformanceSummary() {
+        val captureStats = watermarkRenderer?.stats()
+        val encoderStats = encoder?.stats()
+        val muxerStats = muxer?.stats()
+        if (captureStats == null && encoderStats == null && muxerStats == null) return
+        CaptureDiagnostics.log(
+            "Rendimiento: captura=${captureStats?.captureFps ?: 0}fps " +
+                "recibidos=${captureStats?.receivedFrames ?: 0L} " +
+                "obsoletos=${captureStats?.staleFramesDropped ?: 0L} " +
+                "colaMax=${captureStats?.maxPendingFrames ?: 0} " +
+                "edadMax=${captureStats?.maxFrameAgeMs ?: 0}ms | " +
+                "codificados=${encoderStats?.encodedFrames ?: 0L} " +
+                "huecosPTS=${encoderStats?.ptsGapFrames ?: 0L} " +
+                "huecoMax=${encoderStats?.maxPtsGapMs ?: 0}ms " +
+                "entregasLentas=${encoderStats?.slowDeliveries ?: 0} " +
+                "entregaMax=${encoderStats?.maxDeliveryMs ?: 0}ms | " +
+                "escrituras=${muxerStats?.samplesWritten ?: 0L} " +
+                "escriturasLentas=${muxerStats?.slowWrites ?: 0} " +
+                "escrituraMax=${muxerStats?.maxWriteMs ?: 0}ms",
         )
     }
 
@@ -264,6 +298,7 @@ class CaptureSession(
         if (released) return
         released = true
         paused = false
+        logPerformanceSummary()
 
         capturer?.release()
         capturer = null

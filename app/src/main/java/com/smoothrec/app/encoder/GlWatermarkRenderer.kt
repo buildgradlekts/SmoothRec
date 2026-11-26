@@ -51,6 +51,19 @@ class GlWatermarkRenderer(
     private val released = AtomicBoolean(false)
     @Volatile private var paused = false
 
+    private val drawRunnable = Runnable { drawFrame() }
+
+    // Todos los contadores siguientes se tocan solo en el hilo GL; la instantánea
+    // publicada es volatile para que el hilo de telemetría lea sin sincronizar.
+    private var pendingFrameCallbacks = 0
+    private var totalReceivedFrames = 0L
+    private var staleFramesDropped = 0L
+    private var maxFrameAgeNs = 0L
+    private var maxPendingFrames = 0
+    private var fpsWindowStartNs = 0L
+    private var fpsWindowFrames = 0
+    @Volatile private var statsSnapshot = CaptureFrameStats()
+
     private var eglDisplay: EGLDisplay = EGL14.EGL_NO_DISPLAY
     private var eglContext: EGLContext = EGL14.EGL_NO_CONTEXT
     private var eglSurface: EGLSurface = EGL14.EGL_NO_SURFACE
@@ -85,7 +98,16 @@ class GlWatermarkRenderer(
                 initShadersAndTextures()
                 val st = SurfaceTexture(oesTextureId).apply {
                     setDefaultBufferSize(width, height)
-                    setOnFrameAvailableListener({ drawFrame() }, glHandler)
+                    setOnFrameAvailableListener(object : SurfaceTexture.OnFrameAvailableListener {
+                        override fun onFrameAvailable(texture: SurfaceTexture) {
+                            pendingFrameCallbacks++
+                            // Coalescing: durante una ráfaga solo queda un dibujo
+                            // pendiente. updateTexImage() tomará el buffer más
+                            // reciente; los anteriores se descartan sin coste extra.
+                            glHandler.removeCallbacks(drawRunnable)
+                            glHandler.post(drawRunnable)
+                        }
+                    }, glHandler)
                 }
                 surfaceTexture = st
                 captureSurface = Surface(st)
@@ -104,7 +126,14 @@ class GlWatermarkRenderer(
 
     fun setPaused(paused: Boolean) {
         this.paused = paused
+        if (paused) {
+            // La ventana de FPS se reinicia en el primer draw tras reanudar.
+            statsSnapshot = statsSnapshot.copy(captureFps = 0)
+        }
     }
+
+    /** Instantánea de captura real; nunca estimada a partir de la configuración. */
+    fun stats(): CaptureFrameStats = statsSnapshot
 
     fun release() {
         if (!released.compareAndSet(false, true)) return
@@ -129,6 +158,14 @@ class GlWatermarkRenderer(
     private fun drawFrame() {
         if (released.get()) return
         val st = surfaceTexture ?: return
+
+        // Un único callback pendiente como máximo gracias al coalescing del
+        // listener. Si llegaron varios frames mientras dibujábamos, descartamos
+        // los obsoletos: updateTexImage() adquiere el búfer más reciente.
+        val pending = pendingFrameCallbacks.coerceAtLeast(1)
+        pendingFrameCallbacks = 0
+        val nowNs = System.nanoTime()
+
         try {
             st.updateTexImage()
         } catch (e: Exception) {
@@ -138,16 +175,21 @@ class GlWatermarkRenderer(
         if (paused) {
             // Drenamos SurfaceTexture para no bloquear VirtualDisplay, sin enviar
             // fotogramas al encoder mientras la grabación está en pausa.
+            fpsWindowStartNs = 0L
+            fpsWindowFrames = 0
             return
         }
 
+        val textureTsNs = st.timestamp
+        recordCaptureFrame(pending, textureTsNs, nowNs)
+        if (pending > 1) staleFramesDropped += (pending - 1).toLong()
+
         st.getTransformMatrix(stMatrix)
-        val rawTs = st.timestamp
-        val ptsNs = if (rawTs > 0L) rawTs else System.nanoTime()
+        val ptsNs = if (textureTsNs > 0L) textureTsNs else nowNs
 
         GLES20.glViewport(0, 0, width, height)
-        GLES20.glClearColor(0f, 0f, 0f, 1f)
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+        // Sin glClear: el quad OES cubre todo el viewport y sobrescribe cada pixel.
+        // Evita un write de pantalla completa por frame.
 
         // 1. Fotograma de pantalla (OES)
         GLES20.glDisable(GLES20.GL_BLEND)
@@ -168,6 +210,37 @@ class GlWatermarkRenderer(
 
         EGLExt.eglPresentationTimeANDROID(eglDisplay, eglSurface, ptsNs)
         EGL14.eglSwapBuffers(eglDisplay, eglSurface)
+    }
+
+    /** Contabiliza frames realmente entregados por el productor de la Surface. */
+    private fun recordCaptureFrame(pending: Int, textureTimestampNs: Long, nowNs: Long) {
+        totalReceivedFrames += pending.toLong()
+        if (pending > maxPendingFrames) maxPendingFrames = pending
+        if (textureTimestampNs > 0L) {
+            val ageNs = nowNs - textureTimestampNs
+            if (ageNs > 0L && ageNs > maxFrameAgeNs) maxFrameAgeNs = ageNs
+        }
+
+        if (fpsWindowStartNs == 0L) fpsWindowStartNs = nowNs
+        fpsWindowFrames += pending
+        val elapsedNs = nowNs - fpsWindowStartNs
+        if (elapsedNs >= CAPTURE_FPS_WINDOW_NS) {
+            val fps = (fpsWindowFrames * 1_000_000_000.0 / elapsedNs).roundToInt()
+            publishStats(fps)
+            fpsWindowStartNs = nowNs
+            fpsWindowFrames = 0
+        }
+    }
+
+    private fun publishStats(fps: Int) {
+        statsSnapshot = CaptureFrameStats(
+            captureFps = fps,
+            receivedFrames = totalReceivedFrames,
+            staleFramesDropped = staleFramesDropped,
+            maxFrameAgeMs = (maxFrameAgeNs / 1_000_000L)
+                .coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+            maxPendingFrames = maxPendingFrames,
+        )
     }
 
     private fun drawQuad(posHandle: Int, uvHandle: Int, pos: FloatBuffer, uv: FloatBuffer) {
@@ -214,6 +287,9 @@ class GlWatermarkRenderer(
         if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
             throw IllegalStateException("eglMakeCurrent falló")
         }
+        // La superficie va al encoder, no a una pantalla: cualquier espera a vsync
+        // añadiría latencia innecesaria antes de la codificación.
+        EGL14.eglSwapInterval(eglDisplay, 0)
         Matrix.setIdentityM(stMatrix, 0)
     }
 
@@ -295,6 +371,9 @@ class GlWatermarkRenderer(
     }
 
     private fun cleanupInternal() {
+        glHandler.removeCallbacks(drawRunnable)
+        pendingFrameCallbacks = 0
+        publishStats(0)
         try {
             surfaceTexture?.setOnFrameAvailableListener(null)
             captureSurface?.release()
@@ -359,6 +438,7 @@ class GlWatermarkRenderer(
         const val TAG = "GlWatermarkRenderer"
         const val WATERMARK_TEXT = "SmoothRec"
         const val EGL_RECORDABLE_ANDROID = 0x3142
+        const val CAPTURE_FPS_WINDOW_NS = 500_000_000L
 
         val FULLSCREEN_QUAD = floatArrayOf(
             -1f, -1f,

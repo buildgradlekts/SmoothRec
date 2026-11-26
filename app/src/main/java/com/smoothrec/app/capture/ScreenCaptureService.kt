@@ -59,6 +59,8 @@ class ScreenCaptureService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private var overlay: FloatingBarController? = null
     private var fpsOverlay: FpsOverlayController? = null
+    private var thermalMonitor: ThermalMonitor? = null
+    @Volatile private var thermalTracking = false
 
     /** Lee los FPS efectivos del encoder y refresca el indicador cada 500 ms. */
     private val fpsTick = object : Runnable {
@@ -69,6 +71,40 @@ class ScreenCaptureService : Service() {
         }
     }
 
+    private fun startThermalMonitor() {
+        if (thermalTracking) return
+        thermalTracking = true
+        thermalMonitor?.start()
+    }
+
+    private fun stopThermalMonitor() {
+        if (!thermalTracking) return
+        thermalTracking = false
+        val monitor = thermalMonitor ?: return
+        CaptureDiagnostics.log("Temperatura final: ${monitor.label()} (${monitor.status})")
+        monitor.stop()
+    }
+
+    /** Publica telemetría real (captura, encoder, muxer y temperatura) sin tocar la UI. */
+    private fun publishTelemetry(currentSession: CaptureSession, activeMs: Long) {
+        val telemetry = currentSession.snapshotTelemetry(activeMs).copy(
+            thermalStatus = thermalMonitor?.status
+                ?: RecordingTelemetry.THERMAL_UNAVAILABLE,
+        )
+        sendBroadcast(telemetry.toIntent().setPackage(packageName))
+        if (activeMs - lastPerfLogMs >= 10_000L) {
+            lastPerfLogMs = activeMs
+            CaptureDiagnostics.log(
+                "Telemetría: captura=${telemetry.captureFps}fps encoder=${telemetry.effectiveFps}fps " +
+                    "obsoletos=${telemetry.droppedFrames} colaMax=${telemetry.captureBacklogMax} " +
+                    "edadMax=${telemetry.frameAgeMaxMs}ms huecosPTS=${telemetry.ptsGapFrames} " +
+                    "huecoMax=${telemetry.maxPtsGapMs}ms escrituraMax=${telemetry.maxWriteMs}ms " +
+                    "temp=${telemetry.thermalStatus}",
+            )
+        }
+    }
+
+    private var lastPerfLogMs = -10_000L
     private var segmentStartedElapsed = 0L
     private var accumulatedActiveMs = 0L
     private var maxDurationMs = 0L
@@ -88,8 +124,7 @@ class ScreenCaptureService : Service() {
             }
 
             if (currentSession != null) {
-                val telemetry = currentSession.snapshotTelemetry(activeMs)
-                sendBroadcast(telemetry.toIntent().setPackage(packageName))
+                publishTelemetry(currentSession, activeMs)
             }
 
             try {
@@ -119,6 +154,14 @@ class ScreenCaptureService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        // Solo instanciamos la API térmica en versiones que la tienen (29+).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            thermalMonitor = ThermalMonitor(applicationContext)
+        }
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -215,6 +258,7 @@ class ScreenCaptureService : Service() {
         val settings = RecordingPreferences.load(this)
         maxDurationMs = settings.durationLimit.durationMs
         accumulatedActiveMs = 0L
+        lastPerfLogMs = -10_000L
         isPaused = false
         recordingStopPosted.set(false)
         CaptureDiagnostics.log(
@@ -245,9 +289,11 @@ class ScreenCaptureService : Service() {
             { messageRes -> notifyConfigApplied(localizedString(messageRes)) },
         )
         session = newSession
+        startThermalMonitor()
 
         lifecycle.execute {
             if (endRequested) {
+                stopThermalMonitor()
                 newSession.release()
                 if (session === newSession) session = null
                 mainHandler.post {
@@ -262,6 +308,7 @@ class ScreenCaptureService : Service() {
             try {
                 newSession.start()
                 if (endRequested) {
+                    stopThermalMonitor()
                     newSession.release()
                     if (session === newSession) session = null
                     mainHandler.post {
@@ -292,6 +339,7 @@ class ScreenCaptureService : Service() {
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Fallo al iniciar la captura", e)
+                stopThermalMonitor()
                 mainHandler.post {
                     if (session === newSession) session = null
                     timerActive = false
@@ -321,8 +369,7 @@ class ScreenCaptureService : Service() {
         lifecycle.execute {
             currentSession.pause()
         }
-        val telemetry = currentSession.snapshotTelemetry(accumulatedActiveMs)
-        sendBroadcast(telemetry.toIntent().setPackage(packageName))
+        publishTelemetry(currentSession, accumulatedActiveMs)
         CaptureNotification.update(
             this,
             localizedString(
@@ -343,8 +390,7 @@ class ScreenCaptureService : Service() {
         lifecycle.execute {
             currentSession.resume()
         }
-        val telemetry = currentSession.snapshotTelemetry(accumulatedActiveMs)
-        sendBroadcast(telemetry.toIntent().setPackage(packageName))
+        publishTelemetry(currentSession, accumulatedActiveMs)
         CaptureNotification.update(
             this,
             localizedString(
@@ -364,6 +410,7 @@ class ScreenCaptureService : Service() {
         mainHandler.removeCallbacks(fpsTick)
         overlay?.onRecordingStopped()
         hideFpsOverlay()
+        stopThermalMonitor()
         lifecycle.execute {
             val current = session
             current?.release()
@@ -414,6 +461,7 @@ class ScreenCaptureService : Service() {
         overlay?.hide()
         overlay = null
         hideFpsOverlay()
+        stopThermalMonitor()
         val activeProjection = projection
         projection = null
         if (activeProjection != null) {
@@ -546,6 +594,7 @@ class ScreenCaptureService : Service() {
         overlay?.hide()
         overlay = null
         hideFpsOverlay()
+        stopThermalMonitor()
         releaseWakeLock()
         lifecycle.execute {
             currentSession?.release()

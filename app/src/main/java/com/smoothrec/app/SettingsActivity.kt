@@ -322,7 +322,7 @@ class SettingsActivity : Activity() {
                         statusView.setText(R.string.update_current)
                     }
                     is UpdateManager.CheckResult.Error -> {
-                        statusView.setText(R.string.update_error)
+                        statusView.setText(result.messageRes)
                     }
                     is UpdateManager.CheckResult.Available -> {
                         pendingUpdate = result.info

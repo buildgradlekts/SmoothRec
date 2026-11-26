@@ -3,7 +3,7 @@
 Grabador de pantalla nativo desarrollado en **Kotlin** con Android SDK. Sin Compose, sin NDK, sin C++ y sin dependencias externas más allá del propio SDK y la biblioteca estándar de Kotlin.
 
 - `applicationId`: `com.smoothrec.app`
-- `versionCode 12` · `versionName 0.5.5`
+- `versionCode 13` · `versionName 0.5.6`
 - `minSdk 23` · `targetSdk 35` · `compileSdk 35` · JVM 17
 - Interfaz XML oscura y minimalista, con botón central circular, estados de grabación y ajustes.
 - Salida en MP4 dentro de `Movies/SmoothRec` mediante MediaStore.
@@ -12,21 +12,21 @@ Grabador de pantalla nativo desarrollado en **Kotlin** con Android SDK. Sin Comp
 
 | Repositorio | Uso | Última release |
 |---|---|---|
-| [`buildgradlekts/SmoothRec`](https://github.com/buildgradlekts/SmoothRec) | Repositorio principal y fuente de actualizaciones OTA | **v12 · 0.5.5 · código 12** |
+| [`buildgradlekts/SmoothRec`](https://github.com/buildgradlekts/SmoothRec) | Repositorio principal y fuente de actualizaciones OTA | **v13 · 0.5.6 · código 13** |
 | [`buildgradlekts/SmoothRec-Grabador-De-Pantalla`](https://github.com/buildgradlekts/SmoothRec-Grabador-De-Pantalla) | Repositorio histórico; mantiene la v8 | v8 · 0.5.1 · código 8 |
 
 ### Descarga actual
 
-- APK directo (v12): https://github.com/buildgradlekts/SmoothRec/releases/download/v12/smoothrec-v0.5.5-code12-universal.apk
-- Página de la release: https://github.com/buildgradlekts/SmoothRec/releases/tag/v12
-- SHA-256: `a935f5d4279db81f3e82fd326f6efdd099ccda3f04d3479028cf65ab41c83493`
+- APK directo (v13): https://github.com/buildgradlekts/SmoothRec/releases/download/v13/smoothrec-v0.5.6-code13-universal.apk
+- Página de la release: https://github.com/buildgradlekts/SmoothRec/releases/tag/v13
+- SHA-256: `a50cb6f7bd9b4f61973d7a21c7105b3d690e7cb0642a21173e7f650e891a9c87`
 - Firma: certificado `Android Debug`, con la misma huella SHA-256 `17927bed24613406386d0c19f735e692d241668408c0fd6851b56dc8760553e9` que las versiones anteriores, por lo que Android permite actualizar sin desinstalar.
 
 Para instalar un APK descargado fuera de Play Store, Android puede pedir autorizar **“Instalar aplicaciones desconocidas”**. No desinstales la versión anterior si quieres conservar los vídeos y las preferencias.
 
 > Nota: la v8 instalada busca actualizaciones en el repositorio histórico. Instala una vez la v9 o posterior desde el repositorio principal para que la app pase a consultar `buildgradlekts/SmoothRec`.
 
-> Las optimizaciones de rendimiento listadas en *Rendimiento* están commiteadas localmente después de v12; **no se ha publicado una release nueva** con ellas.
+> La v13 incluye las optimizaciones de rendimiento listadas en *Rendimiento*. El código fuente correspondiente está en `main`.
 
 ## Actualizaciones dentro de la app (OTA)
 
@@ -42,7 +42,7 @@ https://api.github.com/repos/buildgradlekts/SmoothRec/releases/latest
 - El permiso de instalación se solicita **después** de descargar y verificar. Al volver de Ajustes se lanza el instalador; «Ahora no» deja el APK cacheado.
 - Si queda un APK válido sin instalar, Inicio muestra la fila **«Actualización lista para instalar»**.
 - Solo se aceptan URL **HTTPS**, releases publicados (se ignoran borradores, prereleases y assets cuyo estado no sea `uploaded`) y assets `.apk`.
-- Se prefiere el `versionCode` explícito de las notas (`versionCode: 12`); si no está, se usa el tag como referencia. Se ignoran las versiones ya omitidas con «No volver a preguntar».
+- Se prefiere el `versionCode` explícito de las notas (`versionCode: 13`); si no está, se usa el tag como referencia. Se ignoran las versiones ya omitidas con «No volver a preguntar».
 - Antes de abrir el instalador se validan SHA-256 (`digest`, asset `.sha256` o línea `SHA-256:` de las notas), `applicationId`, `versionCode`, `minSdk` y huella del certificado de firma.
 - La instalación **nunca** es silenciosa: se confirma con el instalador oficial de Android.
 - Si GitHub no responde o devuelve un error HTTP distinto de 404, se muestra un mensaje de error; 404 significa “sin releases publicados”. Tras un error se reintenta a los 15 min; el intervalo normal de comprobación es de 6 h.
@@ -142,14 +142,13 @@ APK generado: `app/build/outputs/apk/debug/app-debug.apk`
 - `assembleDebug --offline --no-daemon`: correcto tras cada uno de los últimos cambios.
 - `test`: `NO-SOURCE` (el proyecto no tiene tests automáticos).
 - `lintDebug`: sin repetir en esta ronda; históricamente 17 errores y 100 avisos preexistentes.
-- El `digest` de GitHub y el hash de la release v12 coinciden (`a935f5d4…c83493`).
+- El `digest` de GitHub y el hash de la release v13 coinciden (`a50cb6f7…91a9c87`).
 - La huella del certificado debug es idéntica antes y después de las optimizaciones: `17927bed…0553e9`.
-- APK local de esta ronda: 1.772.217 bytes, SHA-256 `73855617663e164669e507b75640d0ff76ba7dbb2aee3831afe5c7cdd9ce753d`; APK publicado en v12: 1.705.661 bytes.
+- APK de esta versión: 1.707.290 bytes, SHA-256 `a50cb6f7bd9b4f61973d7a21c7105b3d690e7cb0642a21173e7f650e891a9c87`; `versionCode='13'` y `versionName='0.5.6'` verificados con `aapt dump badging`.
 - No hay teléfono ni `adb` en este entorno: **no se ha validado en dispositivo** la instalación OTA real, la grabación simultánea de voz y audio interno, la estabilidad a 60 FPS en juegos ni las tres grabaciones seguidas en Android 14+.
 
 ## Pendiente
 
-- Publicar una nueva release (v13) con las optimizaciones locales cuando se validen en teléfono; **no se ha publicado ni subido APK sin autorización**.
 - Tres grabaciones seguidas con el mismo consentimiento en Android 14+, con y sin marca de agua; pausa/reanudación; giro y cambio de tamaño en modo «Una app».
 - Fallo simulado del primer encoder, cierre con AAC colgado (no publicar MP4) y OTA completa desde la versión anterior.
 - Control numérico libre de bitrate en kbps (por ahora se seleccionan perfiles: AUTO / Bajo / Medio / Alto / Ultra / Máximo).

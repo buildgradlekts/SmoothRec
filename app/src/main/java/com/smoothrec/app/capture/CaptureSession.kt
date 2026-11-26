@@ -106,13 +106,7 @@ class CaptureSession(
                 newMuxer.startWithAvailableTracks()
             }
 
-            val newEncoder = EncoderFactory.create(config)
-            try {
-                newEncoder.start(config, muxer!!)
-            } catch (e: Exception) {
-                newEncoder.release()
-                throw e
-            }
+            val newEncoder = EncoderFactory.createAndStart(config, newMuxer)
             encoder = newEncoder
 
             // Solo instanciamos el pipeline GL si la marca de agua está activada.
@@ -289,9 +283,10 @@ class CaptureSession(
         watermarkRenderer = null
 
         encoder?.signalEndOfStream()
-        audioEncoder?.stop()
+        // false = el hilo AAC sigue vivo: no se puede publicar el MP4.
+        val audioFinished = audioEncoder?.stop() ?: true
         audioEncoder = null
-        audioPlan?.release()
+        audioPlan?.release() // también desbloquea una lectura de AudioRecord pendiente
         audioPlan = null
 
         encoder?.let {
@@ -305,9 +300,12 @@ class CaptureSession(
 
         val currentMuxer = muxer
         currentMuxer?.stop()
-        val publish = currentMuxer?.hasData() == true && currentMuxer.finalizedOk()
+        val publish = audioFinished && currentMuxer?.hasData() == true && currentMuxer.finalizedOk()
         savedOk = publish
-        if (!publish && currentMuxer?.hasData() == true) {
+        if (!audioFinished) {
+            Log.e(TAG, "MP4 descartado: el encoder AAC no terminó a tiempo")
+            CaptureDiagnostics.log("Sesión: MP4 descartado por cierre incompleto de AAC")
+        } else if (!publish && currentMuxer?.hasData() == true) {
             Log.w(TAG, "MP4 descartado: MediaMuxer no cerró correctamente")
         }
         muxer = null

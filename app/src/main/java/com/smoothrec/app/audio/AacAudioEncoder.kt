@@ -7,6 +7,7 @@ import android.media.MediaFormat
 import android.os.Process
 import android.util.Log
 import com.smoothrec.app.encoder.EncoderOutput
+import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -43,6 +44,8 @@ class AacAudioEncoder(
     @Volatile private var pausedOffsetNs = 0L
     @Volatile private var reanchorNeeded = false
     @Volatile private var healthState = AudioHealthState.READY
+    @Volatile private var abandoned = false
+    @Volatile private var eosConfirmed = false
 
     private var codec: MediaCodec? = null
     private var thread: Thread? = null
@@ -63,8 +66,16 @@ class AacAudioEncoder(
                 MediaCodecInfo.CodecProfileLevel.AACObjectLC,
             )
         }
-        mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        mediaCodec.start()
+        try {
+            mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            mediaCodec.start()
+        } catch (e: Exception) {
+            Log.e(TAG, "No se pudo iniciar el codec AAC", e)
+            CaptureDiagnostics.log("Encoder AAC: fallo al iniciar ${e.javaClass.simpleName}")
+            try { mediaCodec.release() } catch (_: Exception) {}
+            healthState = AudioHealthState.ERROR
+            return false
+        }
         codec = mediaCodec
         thread = Thread({ pump(mediaCodec) }, "SmoothRecAudioEncoder").apply { start() }
 
@@ -96,20 +107,32 @@ class AacAudioEncoder(
 
     fun state(): AudioHealthState = healthState
 
-    fun stop() {
-        if (!stopping.compareAndSet(false, true)) {
-            try {
-                finishedLatch.await(5, TimeUnit.SECONDS)
-            } catch (_: InterruptedException) {
-                Thread.currentThread().interrupt()
-            }
-            return
-        }
-        try {
-            finishedLatch.await(5, TimeUnit.SECONDS)
+    /** Nunca escribe en el muxer si el cierre ya se dio por fallido. */
+    private fun deliver(buffer: ByteBuffer, info: MediaCodec.BufferInfo) {
+        if (abandoned) return
+        output.onEncodedData(EncoderOutput.TRACK_AUDIO, buffer, info)
+    }
+
+    /** @return true si el hilo terminó a tiempo y ya no escribirá en el muxer. */
+    fun stop(): Boolean {
+        stopping.set(true)
+        val t = thread ?: return false
+        val finished = try {
+            finishedLatch.await(STOP_TIMEOUT_MS, TimeUnit.MILLISECONDS)
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
+            false
         }
+        if (!finished) {
+            abandoned = true
+            healthState = AudioHealthState.ERROR
+            t.interrupt()
+            Log.e(TAG, "El hilo AAC no terminó en ${STOP_TIMEOUT_MS}ms")
+            CaptureDiagnostics.log("Encoder AAC: no terminó en ${STOP_TIMEOUT_MS}ms; se descarta el MP4")
+        } else if (!eosConfirmed) {
+            CaptureDiagnostics.log("Encoder AAC: terminó sin confirmar EOS")
+        }
+        return finished
     }
 
     private fun pump(mediaCodec: MediaCodec) {
@@ -161,7 +184,7 @@ class AacAudioEncoder(
                             if (buffer != null) {
                                 buffer.position(info.offset)
                                 buffer.limit(info.offset + info.size)
-                                output.onEncodedData(EncoderOutput.TRACK_AUDIO, buffer, info)
+                                deliver(buffer, info)
                             }
                         }
                         mediaCodec.releaseOutputBuffer(outIndex, false)
@@ -316,20 +339,23 @@ class AacAudioEncoder(
                 drainPendingOutputs()
             }
 
-            // Fin de stream
-            val eosIndex = mediaCodec.dequeueInputBuffer(INPUT_TIMEOUT_US)
-            if (eosIndex >= 0) {
-                mediaCodec.queueInputBuffer(
-                    eosIndex,
-                    0,
-                    0,
-                    lastQueuedPtsUs,
-                    MediaCodec.BUFFER_FLAG_END_OF_STREAM,
-                )
+            // Fin de stream: reintenta hasta conseguir un buffer de entrada para el EOS.
+            var eosQueued = false
+            var attempts = 0
+            while (!eosQueued && attempts++ < 10) {
+                val eosIndex = mediaCodec.dequeueInputBuffer(INPUT_TIMEOUT_US)
+                if (eosIndex >= 0) {
+                    mediaCodec.queueInputBuffer(
+                        eosIndex, 0, 0, lastQueuedPtsUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM,
+                    )
+                    eosQueued = true
+                } else {
+                    drainPendingOutputs()
+                }
             }
             var eosReceived = false
             var guard = 0
-            while (!eosReceived && guard++ < 200) {
+            while (eosQueued && !eosReceived && !abandoned && guard++ < 150) {
                 val index = mediaCodec.dequeueOutputBuffer(info, OUTPUT_TIMEOUT_US)
                 if (index >= 0) {
                     eosReceived = info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
@@ -346,12 +372,13 @@ class AacAudioEncoder(
                         if (buffer != null) {
                             buffer.position(info.offset)
                             buffer.limit(info.offset + info.size)
-                            output.onEncodedData(EncoderOutput.TRACK_AUDIO, buffer, info)
+                            deliver(buffer, info)
                         }
                     }
                     mediaCodec.releaseOutputBuffer(index, false)
                 }
             }
+            eosConfirmed = eosReceived
             val summary = "AAC resumen: rate=$rateHz frames=$framesQueued overruns=$overrunFixes " +
                 "PTS entrada $firstInputPtsUs..$lastInputPtsUs us, " +
                 "PTS salida $firstOutputPtsUs..$lastOutputPtsUs us"
@@ -390,5 +417,6 @@ class AacAudioEncoder(
         const val OVERRUN_THRESHOLD_NS = 65_000_000L
         const val GENTLE_DRIFT_THRESHOLD_NS = 20_000_000L
         const val SIGNAL_THRESHOLD = 8
+        const val STOP_TIMEOUT_MS = 6_000L
     }
 }

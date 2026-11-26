@@ -4,7 +4,9 @@ import android.content.ContentProvider
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import android.database.MatrixCursor
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.os.ParcelFileDescriptor
 import java.io.File
 import java.io.FileNotFoundException
@@ -36,7 +38,21 @@ class UpdateFileProvider : ContentProvider() {
         selection: String?,
         selectionArgs: Array<out String>?,
         sortOrder: String?,
-    ): Cursor? = null
+    ): Cursor? {
+        val file = fileForUri(uri, context) ?: return null
+        val cols = projection?.map { it } ?: listOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE)
+        val cursor = MatrixCursor(cols.toTypedArray())
+        cursor.addRow(
+            cols.map {
+                when (it) {
+                    OpenableColumns.DISPLAY_NAME -> FILE_NAME
+                    OpenableColumns.SIZE -> file.length()
+                    else -> null
+                }
+            }.toTypedArray(),
+        )
+        return cursor
+    }
 
     override fun insert(uri: Uri, values: ContentValues?): Uri? = null
 

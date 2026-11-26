@@ -56,14 +56,11 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
     @Volatile private var measuredFps = 0
 
     override fun start(config: EncoderConfig, output: EncoderOutput) {
+        check(!released.get()) { "Encoder ya liberado" }
         this.output = output
         frameRate = config.frameRate.coerceAtLeast(1)
-        val mediaCodec = MediaCodec.createByCodecName(codecName)
 
-        configureWithFallback(mediaCodec, config)
-        val inputSurface = mediaCodec.createInputSurface()
-
-        mediaCodec.setCallback(object : MediaCodec.Callback() {
+        val callback = object : MediaCodec.Callback() {
             override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
                 // La entrada es por Surface; no hay buffers de entrada.
             }
@@ -141,19 +138,39 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
                 running.set(false)
                 eosLatch.countDown()
             }
-        }, handler)
+        }
 
-        mediaCodec.start()
-        codec = mediaCodec
-        surface = inputSurface
-        running.set(true)
+        var mediaCodec: MediaCodec? = null
+        var inputSurface: Surface? = null
+        var started = false
+        try {
+            mediaCodec = MediaCodec.createByCodecName(codecName)
+            configureWithFallback(mediaCodec, config, callback)
+            inputSurface = mediaCodec.createInputSurface()
+            mediaCodec.start()
+            codec = mediaCodec
+            surface = inputSurface
+            running.set(true)
+            started = true
+        } finally {
+            if (!started) {
+                // Limpia los objetos locales que release() todavía no conoce.
+                try { inputSurface?.release() } catch (_: Exception) {}
+                try { mediaCodec?.release() } catch (_: Exception) {}
+                this.output = null
+            }
+        }
     }
 
     /**
      * Intenta configurar el encoder con hints de baja latencia y perfil High,
      * degradando de forma controlada si el driver no acepta algún parámetro opcional.
      */
-    private fun configureWithFallback(mediaCodec: MediaCodec, config: EncoderConfig) {
+    private fun configureWithFallback(
+        mediaCodec: MediaCodec,
+        config: EncoderConfig,
+        callback: MediaCodec.Callback,
+    ) {
         val attempts = listOf(
             config.toMediaFormat(includeProfileLevel = true, includeRealtimeHints = true),
             config.toMediaFormat(includeProfileLevel = true, includeRealtimeHints = false),
@@ -162,6 +179,8 @@ class HardwareVideoEncoder(private val codecName: String) : VideoEncoder {
         var lastError: Exception? = null
         for (format in attempts) {
             try {
+                // El callback va antes de configure() y se repone tras cada reset().
+                mediaCodec.setCallback(callback, handler)
                 mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
                 return
             } catch (e: Exception) {

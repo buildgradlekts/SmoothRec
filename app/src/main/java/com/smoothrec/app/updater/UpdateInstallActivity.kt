@@ -246,7 +246,11 @@ class UpdateInstallActivity : Activity() {
             while (!cancelled && attempts < MAX_ATTEMPTS) {
                 attempts++
                 try {
-                    performDownload(url)
+                    synchronized(DOWNLOAD_LOCK) {
+                        // Si una Activity anterior aún escribe el .part, esperamos a que termine.
+                        if (cancelled) throw InterruptedException()
+                        performDownload(url)
+                    }
                     return
                 } catch (e: InterruptedException) {
                     throw e
@@ -277,6 +281,13 @@ class UpdateInstallActivity : Activity() {
         if (!UpdateManager.isOnline(this)) {
             throw IOException(getString(R.string.update_no_connection))
         }
+        if (!UpdateManager.isSecureUrl(url)) {
+            throw Fatal(R.string.update_error, null)
+        }
+        if (expectedSha.isNullOrBlank()) {
+            // Sin hash la verificación fallaría al final: no gastar datos.
+            throw Fatal(R.string.update_verify_hash_missing, null)
+        }
 
         val finalFile = UpdateFileProvider.fileFor(this)
         val partial = UpdateFileProvider.partialFileFor(this)
@@ -299,11 +310,12 @@ class UpdateInstallActivity : Activity() {
         val resumable = UpdateFileProvider.sameTarget(meta, url, expectedSha) &&
             meta?.state == UpdateFileProvider.STATE_PARTIAL &&
             partial.exists()
-        if (resumable && meta != null) {
+        if (resumable) {
+            val existing = meta ?: throw IOException(getString(R.string.update_error))
             offset = partial.length()
-            etag = meta.etag
-            lastModified = meta.lastModified
-            declaredTotal = meta.total
+            etag = existing.etag
+            lastModified = existing.lastModified
+            declaredTotal = existing.total
         } else {
             partial.delete()
             finalFile.delete()
@@ -601,6 +613,7 @@ class UpdateInstallActivity : Activity() {
     ) : Exception(detail)
 
     private companion object {
+        private val DOWNLOAD_LOCK = Any()
         const val TAG = "UpdateInstallActivity"
         const val KEY_URL = "apk_url_saved"
         const val KEY_VERSION = "version_saved"

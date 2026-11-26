@@ -72,6 +72,7 @@ object UpdateManager {
     private const val PREF_LAST_CHECK = "last_update_check_ms"
     internal const val CHANNEL_ID = "smoothrec_updates"
     private const val CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000L
+    private const val RETRY_AFTER_ERROR_MS = 15 * 60 * 1000L
 
     private val executor = Executors.newSingleThreadExecutor { r ->
         Thread(r, "SmoothRecUpdate").apply { isDaemon = true }
@@ -83,24 +84,41 @@ object UpdateManager {
         return name to versionCodeOf(pkgInfo)
     }
 
-    fun getReleasesUrl(context: Context): String {
-        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return prefs.getString(PREF_RELEASES_URL, DEFAULT_RELEASES_URL) ?: DEFAULT_RELEASES_URL
+    internal fun isSecureUrl(url: String): Boolean = try {
+        URL(url).protocol.equals("https", ignoreCase = true)
+    } catch (_: Exception) {
+        false
     }
 
-    fun setReleasesUrl(context: Context, url: String) {
+    fun getReleasesUrl(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val stored = prefs.getString(PREF_RELEASES_URL, DEFAULT_RELEASES_URL) ?: DEFAULT_RELEASES_URL
+        return if (isSecureUrl(stored)) stored else DEFAULT_RELEASES_URL
+    }
+
+    /** @return false si la URL no es HTTPS (no se guarda). */
+    fun setReleasesUrl(context: Context, url: String): Boolean {
+        val clean = url.trim().ifEmpty { DEFAULT_RELEASES_URL }
+        if (!isSecureUrl(clean)) return false
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()
-            .putString(PREF_RELEASES_URL, url.trim().ifEmpty { DEFAULT_RELEASES_URL })
+            .putString(PREF_RELEASES_URL, clean)
             .apply()
+        return true
     }
 
     fun checkIfNeeded(context: Context) {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
         if (now - prefs.getLong(PREF_LAST_CHECK, 0L) < CHECK_INTERVAL_MS) return
-        prefs.edit().putLong(PREF_LAST_CHECK, now).apply()
+        // Reserva de 15 min: evita consultas duplicadas si la pantalla se recrea.
+        prefs.edit()
+            .putLong(PREF_LAST_CHECK, now - CHECK_INTERVAL_MS + RETRY_AFTER_ERROR_MS)
+            .apply()
         checkDetailed(context) { result ->
+            if (result !is CheckResult.Error) {
+                prefs.edit().putLong(PREF_LAST_CHECK, System.currentTimeMillis()).apply()
+            }
             if (result is CheckResult.Available) {
                 notifyAvailable(context, result.info)
             }
@@ -184,6 +202,7 @@ object UpdateManager {
         val apkName = apk.optString("name", "")
         val apkUrl = apk.optString("browser_download_url", "")
         if (apkUrl.isBlank()) return FetchOutcome.NotFound
+        if (!isSecureUrl(apkUrl)) return FetchOutcome.NotFound
 
         val explicit = UpdateVersion.explicitCode(tag, apkName, notes)
         val digest = UpdateVersion.extractSha256(
@@ -229,7 +248,7 @@ object UpdateManager {
             if (!isChecksum) continue
             val url = asset.optString("browser_download_url", "")
             if (url.isBlank()) continue
-            val text = get(url, "text/plain") ?: continue
+            val text = runCatching { get(url, "text/plain") }.getOrNull() ?: continue
             val hash = UpdateVersion.extractSha256(text)
             if (hash != null) return hash
         }
@@ -237,6 +256,7 @@ object UpdateManager {
     }
 
     private fun get(urlString: String, accept: String): String? {
+        require(isSecureUrl(urlString)) { "Solo se permiten URLs HTTPS" }
         val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
             connectTimeout = 15_000

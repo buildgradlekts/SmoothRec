@@ -5,9 +5,36 @@ import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.os.Build
 import android.util.Log
+import com.smoothrec.app.audio.CaptureDiagnostics
 
 /** Selecciona el encoder H.264 hardware más adecuado disponible en el dispositivo. */
 object EncoderFactory {
+
+    /** Prueba cada encoder AVC (hardware primero) hasta que uno realmente arranque. */
+    fun createAndStart(config: EncoderConfig, output: EncoderOutput): VideoEncoder {
+        val names = codecNames(config)
+        if (names.isEmpty()) {
+            throw IllegalStateException("No hay encoder H.264 disponible en el dispositivo")
+        }
+        var lastError: Exception? = null
+        for (name in names) {
+            val candidate = HardwareVideoEncoder(name)
+            try {
+                candidate.start(config, output)
+                CaptureDiagnostics.log("Encoder en uso: $name")
+                return candidate
+            } catch (e: Exception) {
+                Log.w(TAG, "Encoder $name no arrancó, probando siguiente", e)
+                CaptureDiagnostics.log("Encoder $name falló: ${e.message}")
+                candidate.release()
+                lastError = e
+            }
+        }
+        throw IllegalStateException(
+            "Ningún encoder H.264 pudo iniciarse (probados: ${names.joinToString()})",
+            lastError,
+        )
+    }
 
     fun create(config: EncoderConfig): VideoEncoder {
         val names = codecNames(config)
@@ -46,6 +73,11 @@ object EncoderFactory {
             if (!isSoftware(info) && info.name !in names) {
                 names.add(info.name)
             }
+        }
+
+        // Último recurso: software, solo si ningún hardware arranca.
+        for (info in avcEncoders) {
+            if (isSoftware(info) && info.name !in names) names.add(info.name)
         }
 
         if (names.isEmpty()) {

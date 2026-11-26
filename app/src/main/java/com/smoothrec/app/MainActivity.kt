@@ -169,9 +169,17 @@ class MainActivity : Activity(), SetupHost {
     }
 
     private fun refreshUpdateReadyRow() {
+        UpdateManager.readyUpdateAsync(this) { ready ->
+            if (!isDestroyed && !isFinishing) applyUpdateReadyRow(ready)
+        }
+    }
+
+    private fun applyUpdateReadyRow(ready: UpdateManager.UpdateInfo?) {
         val row = findViewById<View>(R.id.updateReadyRow)
-        val ready = UpdateManager.readyUpdate(this)
-        if (ready == null) { row.visibility = View.GONE; return }
+        if (ready == null) {
+            row.visibility = View.GONE
+            return
+        }
         findViewById<TextView>(R.id.updateReadyVersion).text =
             "${getString(R.string.app_name)} ${ready.versionName}"
         row.visibility = View.VISIBLE

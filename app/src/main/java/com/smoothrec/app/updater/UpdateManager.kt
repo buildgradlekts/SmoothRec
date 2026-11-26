@@ -14,6 +14,7 @@ import android.os.Build
 import android.os.Handler
 import android.util.Log
 import com.smoothrec.app.R
+import com.smoothrec.app.audio.CaptureDiagnostics
 import com.smoothrec.app.ui.LocaleHelper
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -152,6 +153,30 @@ object UpdateManager {
             assetSize = meta.size,
             hasExplicitCode = true,
         )
+    }
+
+    /**
+     * Comprueba el APK cacheado fuera del hilo principal. getPackageArchiveInfo()
+     * parsea el APK y puede tardar decenas de ms; hacerlo en onResume() bloquea la UI.
+     * El resultado se entrega en el hilo principal y se mide en el diagnóstico.
+     */
+    fun readyUpdateAsync(context: Context, onResult: (UpdateInfo?) -> Unit) {
+        val appContext = context.applicationContext
+        executor.execute {
+            val startedNs = System.nanoTime()
+            val ready = try {
+                readyUpdate(appContext)
+            } catch (e: Exception) {
+                Log.w(TAG, "Error al comprobar la actualización lista", e)
+                null
+            }
+            val elapsedMs = (System.nanoTime() - startedNs) / 1_000_000L
+            CaptureDiagnostics.log(
+                "UI: fila de actualización comprobada en ${elapsedMs}ms " +
+                    "(hilo=${Thread.currentThread().name})",
+            )
+            Handler(appContext.mainLooper).post { onResult(ready) }
+        }
     }
 
     fun checkIfNeeded(context: Context) {

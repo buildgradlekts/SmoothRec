@@ -36,25 +36,6 @@ object EncoderFactory {
         )
     }
 
-    fun create(config: EncoderConfig): VideoEncoder {
-        val names = codecNames(config)
-        if (names.isEmpty()) {
-            throw IllegalStateException("No hay encoder H.264 disponible en el dispositivo")
-        }
-
-        var lastError: Exception? = null
-        for (name in names) {
-            try {
-                Log.i(TAG, "Usando encoder: $name")
-                return HardwareVideoEncoder(name)
-            } catch (e: Exception) {
-                Log.w(TAG, "No se pudo crear $name, probando siguiente", e)
-                lastError = e
-            }
-        }
-        throw lastError ?: IllegalStateException("No se pudo crear ningún encoder")
-    }
-
     /** Nombres de codec que se intentarán, priorizando aceleración por hardware. */
     fun codecNames(config: EncoderConfig): List<String> {
         val infos = MediaCodecList(MediaCodecList.ALL_CODECS).codecInfos
